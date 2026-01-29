@@ -20,11 +20,42 @@ export const mockBulletins = [
     { id: 7, date: "2023-10-12", category: "QA", title: "如何申請門禁卡設定？", content: "..." },
 ];
 
-export const mockStats = {
-    notice: 28,     // 公告通知
-    activities: 8,  // 活動通知
-    meeting: 45,    // 會議記錄
-    lostAndFound: 12, // 失物招領
-    others: 5,      // 其他項目
-    qa: 10          // Q&A
+/**
+ * 根據 mockBulletins 動態計算各類別數量
+ */
+const calculateStats = (bulletins) => {
+    // 初始化計數器
+    const stats = {
+        notice: 0,
+        activities: 0,
+        meeting: 0,
+        lostAndFound: 0,
+        others: 0,
+        qa: 0
+    };
+
+    // 類別對照 (Category Name -> Stats Key)
+    const categoryMap = {
+        '公告': 'notice',
+        '活動': 'activities',
+        '會議': 'meeting',
+        '招領': 'lostAndFound',
+        '其他': 'others',
+        'QA': 'qa',
+        'Q&A': 'qa'
+    };
+
+    bulletins.forEach(item => {
+        // 取得對應的 key
+        const key = categoryMap[item.category];
+        // 如果有對應的 key，則累加
+        if (key && stats.hasOwnProperty(key)) {
+            stats[key]++;
+        }
+    });
+
+    return stats;
 };
+
+// 匯出動態計算的結果
+export const mockStats = calculateStats(mockBulletins);

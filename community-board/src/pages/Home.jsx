@@ -28,14 +28,14 @@ const Home = () => {
             <Header title={mockSiteData.title} />
 
             <main className="container">
+                {/* 緊急通告跑馬燈 (放在快速服務上方) */}
+                <EmergencyTicker messages={mockEmergency} />
+
                 {/* 快速服務區塊 */}
                 <section style={{ marginBottom: '24px' }}>
                     <h2 style={{ marginBottom: '16px', color: 'var(--text-muted)' }}>快速服務</h2>
                     <FeatureGrid stats={mockStats} />
                 </section>
-
-                {/* 緊急通告跑馬燈 (放在快速服務下方) */}
-                <EmergencyTicker messages={mockEmergency} />
 
                 {/* 公告區塊 */}
                 <section>

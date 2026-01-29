@@ -11,7 +11,7 @@ const CategoryPage = () => {
     const navigate = useNavigate();
     const [selectedBulletin, setSelectedBulletin] = useState(null);
 
-    // 簡單的類別名稱對照
+    // 1. 類別名稱對照 (Router Param -> Display Name)
     const categoryNames = {
         'notice': '公告通知',
         'activities': '活動通知',
@@ -21,34 +21,73 @@ const CategoryPage = () => {
         'qa': 'Q&A'
     };
 
+    // 2. 資料庫分類對照 (Router Param -> MockData Category)
+    // mockBulletins 的 category 為中文: "公告", "活動", "會議", "招領", "其他", "QA", "緊急"
+    const categoryMapping = {
+        'notice': '公告',
+        'activities': '活動',
+        'meeting': '會議',
+        'lost-found': '招領',
+        'others': '其他',
+        'qa': ['QA', 'Q&A'] // 容錯處理
+    };
+
     const pageTitle = categoryNames[type] || '公告列表';
 
-    // 根據類別篩選資料 (這裡只是模擬，實際應根據 type 篩選)
-    // 注意：因為 mockBulletins 的 category 是中文，這裡做一個簡單的 mapping 或是篩選全部以供演示
-    // 為了演示效果，我們暫時顯示所有資料，但標題改變
-    // 實際專案應實作: mockBulletins.filter(b => mapTypeToCategory(type) === b.category)
-    const filteredBulletins = mockBulletins;
+    // 3. 篩選邏輯
+    const filteredBulletins = mockBulletins.filter(item => {
+        const targetCategory = categoryMapping[type];
+        if (Array.isArray(targetCategory)) {
+            return targetCategory.includes(item.category);
+        }
+        return item.category === targetCategory;
+    });
 
     return (
         <div className="fade-in">
             <Header title={mockSiteData.title} />
 
             <main className="container">
-                <button
-                    onClick={() => navigate('/')}
-                    className="btn btn-secondary"
-                    style={{ marginBottom: '24px' }}
-                >
-                    <ArrowLeft size={20} />
-                    返回首頁
-                </button>
+                {/* Sticky Back Button Container */}
+                <div style={{
+                    position: 'sticky',
+                    top: '20px', // 離頂部一點距離
+                    zIndex: 50,
+                    backgroundColor: 'var(--bg-body)', // 避免背景透出文字
+                    paddingBottom: '16px',
+                    paddingTop: '8px',
+                    marginBottom: '8px',
+                    display: 'flex',
+                    alignItems: 'center'
+                }}>
+                    <button
+                        onClick={() => navigate('/')}
+                        className="btn btn-secondary"
+                        style={{ boxShadow: 'var(--shadow-sm)' }}
+                    >
+                        <ArrowLeft size={20} />
+                        返回首頁
+                    </button>
+                </div>
 
                 <h2 style={{ marginBottom: '24px', color: 'var(--text-main)' }}>{pageTitle}</h2>
 
-                <BulletinSection
-                    bulletins={filteredBulletins}
-                    onBulletinClick={(item) => setSelectedBulletin(item)}
-                />
+                {filteredBulletins.length > 0 ? (
+                    <BulletinSection
+                        bulletins={filteredBulletins}
+                        onBulletinClick={(item) => setSelectedBulletin(item)}
+                    />
+                ) : (
+                    <div style={{
+                        padding: '40px',
+                        textAlign: 'center',
+                        color: 'var(--text-muted)',
+                        backgroundColor: 'var(--bg-card)',
+                        borderRadius: 'var(--radius-lg)'
+                    }}>
+                        目前沒有此類別的資料
+                    </div>
+                )}
             </main>
 
             <Modal

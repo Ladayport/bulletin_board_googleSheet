@@ -10,9 +10,6 @@ const Header = ({ title }) => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            position: 'sticky',
-            top: 0,
-            zIndex: 100
         }}>
             <h1 style={{ fontSize: '1.5rem', color: 'var(--primary-color)' }}>
                 {title}
