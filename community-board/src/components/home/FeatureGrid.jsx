@@ -61,42 +61,56 @@ const FeatureGrid = ({ stats }) => {
     return (
         <div className="feature-grid" style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', // 卡片稍微變小以容納更多
-            gap: 'var(--spacing-md)'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+            gap: '16px',
+            marginBottom: '32px'
         }}>
-            {features.map((item) => (
-                <Card
-                    key={item.id}
-                    onClick={() => navigate(`/category/${item.id}`)}
-                    className="feature-card"
-                >
-                    <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '12px',
-                        textAlign: 'center',
-                        padding: '12px'
-                    }}>
+            {
+                features.map((item) => (
+                    <div
+                        key={item.id}
+                        onClick={() => {
+                            if (stats.onCategoryClick) {
+                                stats.onCategoryClick(item.title);
+                            } else {
+                                navigate(`/category/${item.id}`);
+                            }
+                        }}
+                        className="card interactive"
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '24px',
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                            transition: 'transform 0.2s',
+                            background: 'var(--bg-card)',
+                            borderRadius: '16px',
+                            boxShadow: 'var(--shadow-sm)'
+                        }}
+                    >
                         <div style={{
                             backgroundColor: item.bgColor,
                             padding: '16px',
                             borderRadius: '50%',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
+                            color: 'white',
+                            marginBottom: '12px',
                             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                         }}>
                             {item.icon}
                         </div>
-                        <div>
-                            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: '4px' }}>{item.title}</h3>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{item.count} 筆</p>
+                        <div style={{ fontWeight: '600', fontSize: '1rem', color: 'var(--text-main)', marginBottom: '4px' }}>
+                            {item.title}
+                        </div>
+                        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                            {item.count} 筆
                         </div>
                     </div>
-                </Card>
-            ))}
-        </div>
+                ))
+            }
+        </div >
     );
 };
 
