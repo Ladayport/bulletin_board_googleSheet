@@ -1,22 +1,51 @@
 :root {
-  /* --- 品牌色系 --- */
-  --primary-color: #2563eb;       /* 主色 (藍) */
-  --primary-hover: #1d4ed8;       /* 主色 Hover */
-  --accent-color: #f59e0b;        /* 強調色 (橘/黃) */
-  --bg-color: #f8fafc;            /* 整體背景灰 */
-  
-  /* --- 文字顏色 --- */
-  --text-main: #1e293b;           /* 主要文字 */
-  --text-sub: #64748b;            /* 次要文字 */
-  
-  /* --- 卡片系統 --- */
-  --card-bg: #ffffff;
-  --card-radius: 16px;            /* 圓角 */
-  --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --card-hover-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  
-  /* --- 間距 --- */
+  /* --- 🎨 品牌色系 (Brand Colors) --- */
+  --primary-color: #007bff;
+  /* 主色：按鈕、連結、強調 */
+  --primary-hover: #0056b3;
+  /* 主色懸停 */
+  --secondary-color: #6c757d;
+  /* 次要色：輔助文字、取消按鈕 */
+  --success-color: #28a745;
+  /* 成功/活動 */
+  --warning-color: #ffc107;
+  /* 警告/失物 */
+  --danger-color: #dc3545;
+  /* 危險/緊急 */
+  --info-color: #17a2b8;
+  /* 資訊/會議 */
+
+  /* --- 🖌️ 背景與文字 (Background & Text) --- */
+  --bg-body: #f4f6f9;
+  /* 網頁背景 */
+  --bg-card: #ffffff;
+  /* 卡片背景 */
+  --text-main: #333333;
+  /* 主要文字 */
+  --text-muted: #666666;
+  /* 次要文字 */
+  --border-color: #e9ecef;
+  /* 邊框顏色 */
+
+  /* --- 📐 佈局與形狀 (Layout & Shape) --- */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  /* 卡片圓角 */
+
+  --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 24px;
+  --spacing-xl: 48px;
+
+  /* --- ☁️ 陰影 (Shadows) --- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.15);
+
+  /* --- ⚡ 動畫 (Transitions) --- */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
 }

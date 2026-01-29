@@ -1,10 +1,14 @@
 import Card from '../ui/Card';
 
-const BulletinSection = ({ bulletins }) => {
+const BulletinSection = ({ bulletins, onBulletinClick }) => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
             {bulletins.map((item) => (
-                <Card key={item.id} onClick={() => alert(`查看公告詳情: ${item.title}`)} style={{ padding: 'var(--spacing-md)' }}>
+                <Card
+                    key={item.id}
+                    onClick={() => onBulletinClick && onBulletinClick(item)}
+                    style={{ padding: 'var(--spacing-md)' }}
+                >
                     <div style={{
                         display: 'flex',
                         justifyContent: 'space-between',
@@ -13,22 +17,15 @@ const BulletinSection = ({ bulletins }) => {
                         gap: '8px'
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <span style={{
-                                backgroundColor: 'var(--bg-color)',
-                                color: 'var(--text-sub)',
-                                padding: '4px 8px',
-                                borderRadius: '4px',
-                                fontSize: '0.85rem'
+                            <span className="tag" style={{
+                                backgroundColor: 'var(--bg-body)',
+                                color: 'var(--text-muted)'
                             }}>
                                 {item.date}
                             </span>
-                            <span style={{
+                            <span className="tag" style={{
                                 color: 'var(--primary-color)',
-                                fontWeight: 'bold',
-                                fontSize: '0.9rem',
-                                border: '1px solid var(--primary-color)',
-                                padding: '2px 8px',
-                                borderRadius: '12px'
+                                border: '1px solid var(--primary-color)'
                             }}>
                                 {item.category}
                             </span>

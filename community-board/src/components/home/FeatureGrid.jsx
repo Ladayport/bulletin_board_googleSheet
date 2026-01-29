@@ -28,7 +28,7 @@ const FeatureGrid = ({ stats }) => {
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: 'var(--spacing-md)'
-        }}>
+        }} className="feature-grid">
             {features.map((item, index) => (
                 <Card key={index} onClick={() => alert(`前往 ${item.title} 頁面`)}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>

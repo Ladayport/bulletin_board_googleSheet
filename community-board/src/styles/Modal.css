@@ -1,0 +1,50 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    /* 毛玻璃效果 */
+}
+
+.modal-content {
+    background: var(--bg-card);
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-body {
+    padding: var(--spacing-lg);
+    overflow-y: auto;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.btn-icon:hover {
+    color: var(--text-main);
+}

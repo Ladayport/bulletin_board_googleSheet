@@ -1,0 +1,99 @@
+@import './variables.css';
+@import './animations.css';
+
+body {
+    background-color: var(--bg-body);
+    color: var(--text-main);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* 通用按鈕樣式 */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: none;
+    gap: 8px;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background-color: var(--bg-body);
+    color: var(--text-main);
+}
+
+.btn-secondary:hover {
+    background-color: var(--border-color);
+}
+
+/* 標籤樣式 */
+.tag {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* 卡片樣式 */
+.card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: var(--spacing-lg);
+    transition: var(--transition-fast);
+    border: 1px solid var(--border-color);
+}
+
+.card.interactive {
+    cursor: pointer;
+}
+
+.card.interactive:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* 響應式佈局 */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+/* 手機版適配 */
+@media (max-width: 768px) {
+    :root {
+        --spacing-lg: 16px;
+        /* 縮小手機版間距 */
+    }
+
+    /* 功能區塊改為單欄 */
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Modal 滿版顯示 */
+    .modal-content {
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+    }
+}

@@ -1,28 +1,12 @@
-const Card = ({ children, onClick, style }) => {
+/* src/styles/main.css 追加內容 (Already added in previous step) */
+
+import React from 'react';
+
+const Card = ({ children, onClick, className = '' }) => {
     return (
         <div
             onClick={onClick}
-            style={{
-                backgroundColor: 'var(--card-bg)',
-                borderRadius: 'var(--card-radius)',
-                boxShadow: 'var(--card-shadow)',
-                padding: 'var(--spacing-lg)',
-                cursor: onClick ? 'pointer' : 'default',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                ...style
-            }}
-            onMouseEnter={(e) => {
-                if (onClick) {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = 'var(--card-hover-shadow)';
-                }
-            }}
-            onMouseLeave={(e) => {
-                if (onClick) {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'var(--card-shadow)';
-                }
-            }}
+            className={`card ${onClick ? 'interactive' : ''} ${className}`}
         >
             {children}
         </div>
