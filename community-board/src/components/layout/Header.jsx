@@ -14,18 +14,22 @@ const Header = ({ title }) => {
             <h1 style={{ fontSize: '1.5rem', color: 'var(--primary-color)' }}>
                 {title}
             </h1>
-            <Link to="/login" style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 16px',
-                backgroundColor: 'var(--primary-color)',
-                color: 'white',
-                borderRadius: '8px',
-                fontSize: '0.9rem'
-            }}>
-                <LogIn size={18} />
-                管理登入
+            <Link to="/login"
+                title="管理員登入"
+                className="btn-icon"
+                style={{
+                    color: 'var(--primary-color)',
+                    padding: '8px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-body)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+                <LogIn size={24} />
             </Link>
         </header>
     );
