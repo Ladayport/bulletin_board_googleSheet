@@ -1,14 +1,15 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Login';
+import CategoryPage from './pages/CategoryPage';
 
 function App() {
     return (
         <Router>
             <Routes>
                 <Route path="/" element={<Home />} />
-                {/* 階段三會再實作 /login 與 /admin */}
                 <Route path="/login" element={<Login />} />
+                <Route path="/category/:type" element={<CategoryPage />} />
             </Routes>
         </Router>
     );
