@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "browser-image-compression": "^2.0.2",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.563.0",
     "react-router-dom": "^7.13.0"
