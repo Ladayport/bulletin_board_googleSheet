@@ -6,20 +6,30 @@ const AddAnnouncement = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [preview, setPreview] = useState(null);
+
+    // 預設時間：開始為現在，結束為7天後
+    const now = new Date();
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+
+    // 格式化為 datetime-local 輸入框需要的格式 (YYYY-MM-DDTHH:mm)
+    const formatDateTime = (date) => date.toISOString().slice(0, 16);
+
     const [form, setForm] = useState({
         title: '',
         category: '公告',
         content: '',
-        file: null,      // 原始檔案物件
-        fileData: ''     // Base64 字串 (準備傳給 GAS)
+        isEmergency: false, // 獨立開關
+        startDate: formatDateTime(now),
+        endDate: formatDateTime(nextWeek),
+        file: null,
+        fileData: ''
     });
 
-    // 處理檔案選擇
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // 檢查檔案類型
         if (!['image/jpeg', 'image/png', 'application/pdf'].includes(file.type)) {
             alert('只支援 JPG, PNG 圖片或 PDF 文件');
             return;
@@ -29,25 +39,19 @@ const AddAnnouncement = () => {
             let processedFile = file;
             let base64 = '';
 
-            // 如果是圖片，進行壓縮
             if (file.type.startsWith('image/')) {
-                console.log(`原始大小: ${file.size / 1024} KB`);
                 processedFile = await compressImage(file);
-                console.log(`壓縮後大小: ${processedFile.size / 1024} KB`);
-
-                // 建立預覽圖
                 setPreview(URL.createObjectURL(processedFile));
             } else {
-                setPreview(null); // PDF 不顯示圖片預覽
+                setPreview(null);
             }
 
-            // 轉為 Base64
             base64 = await fileToBase64(processedFile);
 
             setForm(prev => ({
                 ...prev,
                 file: processedFile,
-                fileData: base64 // 這是要傳給 GAS 的核心資料
+                fileData: base64
             }));
 
         } catch (err) {
@@ -62,18 +66,36 @@ const AddAnnouncement = () => {
 
         setLoading(true);
 
-        // --- 這裡將在階段四替換為真實 API 呼叫 ---
-        console.log("準備傳送的資料:", {
-            ...form,
-            fileData: form.fileData.substring(0, 50) + "..." // Log 只顯示前段避免卡住
-        });
+        // 模擬儲存到 localStorage，讓前台可以看到
+        const newBulletin = {
+            id: Date.now(), // 模擬 ID
+            date: form.startDate.split('T')[0], // 取日期部分顯示
+            category: form.category,
+            title: form.title,
+            content: form.content,
+            isEmergency: form.isEmergency,
+            startDate: form.startDate,
+            endDate: form.endDate,
+            // fileData: form.fileData // 實作中檔案太大 localStorage 存不下，暫不存檔案內容到 localStorage
+        };
 
-        setTimeout(() => {
-            alert('模擬發布成功！');
+        try {
+            const existingData = JSON.parse(localStorage.getItem('local_bulletins') || '[]');
+            const updatedData = [newBulletin, ...existingData];
+            localStorage.setItem('local_bulletins', JSON.stringify(updatedData));
+
+            console.log("已儲存至 LocalStorage:", newBulletin);
+
+            setTimeout(() => {
+                alert('發布成功！(已儲存至瀏覽器模擬資料庫)');
+                setLoading(false);
+                navigate('/admin');
+            }, 800);
+        } catch (err) {
+            console.error(err);
+            alert('儲存失敗 (可能是 LocalStorage 空間不足)');
             setLoading(false);
-            navigate('/admin');
-        }, 1500);
-        // ----------------------------------------
+        }
     };
 
     return (
@@ -81,6 +103,20 @@ const AddAnnouncement = () => {
             <h2 style={{ marginBottom: '20px', color: 'var(--primary-color)' }}>發佈新公告</h2>
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+                {/* 緊急公告開關 */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', backgroundColor: '#fef2f2', borderRadius: '8px', border: '1px solid #fee2e2' }}>
+                    <input
+                        type="checkbox"
+                        id="isEmergency"
+                        checked={form.isEmergency}
+                        onChange={e => setForm({ ...form, isEmergency: e.target.checked })}
+                        style={{ width: '20px', height: '20px', accentColor: '#dc2626' }}
+                    />
+                    <label htmlFor="isEmergency" style={{ fontWeight: 'bold', color: '#dc2626', cursor: 'pointer' }}>
+                        標記為緊急公告 (將置頂顯示)
+                    </label>
+                </div>
 
                 {/* 標題與分類 */}
                 <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: '16px' }}>
@@ -104,9 +140,34 @@ const AddAnnouncement = () => {
                             <option value="公告">公告</option>
                             <option value="活動">活動</option>
                             <option value="會議">會議</option>
-                            <option value="緊急">緊急</option>
                             <option value="失物">失物</option>
+                            <option value="其他">其他</option>
+                            <option value="QA">QA</option>
                         </select>
+                    </div>
+                </div>
+
+                {/* 時間設定 */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '8px' }}>開始時間</label>
+                        <input
+                            type="datetime-local"
+                            value={form.startDate}
+                            onChange={e => setForm({ ...form, startDate: e.target.value })}
+                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '8px' }}>結束時間</label>
+                        <input
+                            type="datetime-local"
+                            value={form.endDate}
+                            onChange={e => setForm({ ...form, endDate: e.target.value })}
+                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
+                            required
+                        />
                     </div>
                 </div>
 
@@ -136,11 +197,6 @@ const AddAnnouncement = () => {
                             <img src={preview} alt="Preview" style={{ maxHeight: '200px', borderRadius: '8px', border: '1px solid #eee' }} />
                         </div>
                     )}
-                    {form.file && form.file.type === 'application/pdf' && (
-                        <div style={{ marginTop: '16px', color: 'var(--danger-color)' }}>
-                            已選取 PDF 文件: {form.file.name}
-                        </div>
-                    )}
                 </div>
 
                 {/* 按鈕區 */}
@@ -157,7 +213,7 @@ const AddAnnouncement = () => {
                         className="btn btn-primary"
                         disabled={loading}
                     >
-                        {loading ? '資料上傳中...' : '確認發佈'}
+                        {loading ? '發佈中...' : '確認發佈'}
                     </button>
                 </div>
 

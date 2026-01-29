@@ -15,9 +15,14 @@ const AdminDashboard = () => {
         <div className="fade-in" style={{ maxWidth: '1000px', margin: '0 auto', padding: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
                 <h1 style={{ color: 'var(--primary-color)' }}>後台管理系統</h1>
-                <button onClick={handleLogout} className="btn btn-secondary">
-                    <LogOut size={18} /> 登出
-                </button>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    <button onClick={() => navigate('/')} className="btn btn-secondary">
+                        首頁
+                    </button>
+                    <button onClick={handleLogout} className="btn btn-secondary">
+                        <LogOut size={18} /> 登出
+                    </button>
+                </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>

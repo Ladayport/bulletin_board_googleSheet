@@ -13,14 +13,27 @@ const Home = () => {
         document.title = mockSiteData.title;
     }, []);
 
-    // 排序邏輯：緊急置頂 -> 日期排序
-    const sortedBulletins = [...mockBulletins].sort((a, b) => {
+    // 讀取 LocalStorage 中的新公告並合併
+    const [allBulletins, setAllBulletins] = useState(mockBulletins);
+
+    useEffect(() => {
+        const localData = JSON.parse(localStorage.getItem('local_bulletins') || '[]');
+        if (localData.length > 0) {
+            // 合併資料：新資料 (Local) + 舊資料 (Mock)
+            setAllBulletins([...localData, ...mockBulletins]);
+        }
+    }, []);
+
+    // 排序邏輯：緊急置頂 -> 日期排序 (新 -> 舊)
+    const sortedBulletins = [...allBulletins].sort((a, b) => {
         // 1. 如果 a 是緊急且 b 不是，a 排前面 (-1)
         if (a.isEmergency && !b.isEmergency) return -1;
         // 2. 如果 b 是緊急且 a 不是，b 排前面 (1)
         if (!a.isEmergency && b.isEmergency) return 1;
-        // 3. 兩者相同，則依日期排序 (新 -> 舊) (假設 date 格式為 YYYY-MM-DD 可直接比字串)
-        return b.date.localeCompare(a.date);
+        // 3. 兩者相同，則依日期排序 (新 -> 舊)
+        // 注意：localStorage 存的 startDate 可能是 Date string，mockData 是 "YYYY-MM-DD"
+        // 簡單比較字串即可
+        return (b.date || b.startDate || '').localeCompare(a.date || a.startDate || '');
     });
 
     return (

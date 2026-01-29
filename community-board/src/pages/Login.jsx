@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/auth';
-import '../styles/main.css'; // 確保引入通用樣式
+import { ArrowLeft } from 'lucide-react';
+import '../styles/main.css';
 
 const Login = () => {
     const [formData, setFormData] = useState({ username: '', password: '' });
@@ -16,7 +17,7 @@ const Login = () => {
 
         try {
             await authService.login(formData.username, formData.password);
-            navigate('/admin'); // 登入成功跳轉
+            navigate('/admin');
         } catch (err) {
             setError(err.message);
         } finally {
@@ -33,6 +34,14 @@ const Login = () => {
             backgroundColor: 'var(--bg-body)'
         }}>
             <div className="card fade-in" style={{ width: '100%', maxWidth: '400px' }}>
+                <button
+                    onClick={() => navigate('/')}
+                    className="btn btn-secondary"
+                    style={{ width: '100%', marginBottom: '24px', justifyContent: 'center' }}
+                >
+                    <ArrowLeft size={18} /> 返回首頁
+                </button>
+
                 <h2 style={{ textAlign: 'center', marginBottom: '24px', color: 'var(--primary-color)' }}>
                     管理員登入
                 </h2>
@@ -55,7 +64,6 @@ const Login = () => {
                         <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>帳號</label>
                         <input
                             type="text"
-                            className="form-input"
                             style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ccc' }}
                             value={formData.username}
                             onChange={(e) => setFormData({ ...formData, username: e.target.value })}
