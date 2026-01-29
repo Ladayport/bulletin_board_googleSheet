@@ -1,0 +1,22 @@
+:root {
+  /* --- 品牌色系 --- */
+  --primary-color: #2563eb;       /* 主色 (藍) */
+  --primary-hover: #1d4ed8;       /* 主色 Hover */
+  --accent-color: #f59e0b;        /* 強調色 (橘/黃) */
+  --bg-color: #f8fafc;            /* 整體背景灰 */
+  
+  /* --- 文字顏色 --- */
+  --text-main: #1e293b;           /* 主要文字 */
+  --text-sub: #64748b;            /* 次要文字 */
+  
+  /* --- 卡片系統 --- */
+  --card-bg: #ffffff;
+  --card-radius: 16px;            /* 圓角 */
+  --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --card-hover-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  
+  /* --- 間距 --- */
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+}
