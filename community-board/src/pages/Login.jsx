@@ -1,16 +1,88 @@
-import React from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { authService } from '../services/auth';
+import '../styles/main.css'; // 確保引入通用樣式
 
 const Login = () => {
+    const [formData, setFormData] = useState({ username: '', password: '' });
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        try {
+            await authService.login(formData.username, formData.password);
+            navigate('/admin'); // 登入成功跳轉
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div style={{
+            minHeight: '100vh',
             display: 'flex',
-            justifyContent: 'center',
             alignItems: 'center',
-            height: '100vh',
-            backgroundColor: 'var(--bg-color)',
-            color: 'var(--text-sub)'
+            justifyContent: 'center',
+            backgroundColor: 'var(--bg-body)'
         }}>
-            <h2>登入頁面開發中...</h2>
+            <div className="card fade-in" style={{ width: '100%', maxWidth: '400px' }}>
+                <h2 style={{ textAlign: 'center', marginBottom: '24px', color: 'var(--primary-color)' }}>
+                    管理員登入
+                </h2>
+
+                {error && (
+                    <div style={{
+                        backgroundColor: '#fee2e2',
+                        color: '#dc2626',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        marginBottom: '16px',
+                        fontSize: '0.9rem'
+                    }}>
+                        {error}
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>帳號</label>
+                        <input
+                            type="text"
+                            className="form-input"
+                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ccc' }}
+                            value={formData.username}
+                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>密碼</label>
+                        <input
+                            type="password"
+                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ccc' }}
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            required
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        className="btn btn-primary"
+                        disabled={loading}
+                        style={{ marginTop: '8px', opacity: loading ? 0.7 : 1 }}
+                    >
+                        {loading ? '驗證中...' : '登入系統'}
+                    </button>
+                </form>
+            </div>
         </div>
     );
 };
