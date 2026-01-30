@@ -35,7 +35,7 @@ const BulletinSection = ({ bulletins, onBulletinClick }) => {
                                     backgroundColor: 'var(--bg-body)',
                                     color: 'var(--text-muted)'
                                 }}>
-                                    {item.date}
+                                    {item.startDate || item.date}
                                 </span>
                                 <span className="tag" style={{
                                     ...categoryStyle,
