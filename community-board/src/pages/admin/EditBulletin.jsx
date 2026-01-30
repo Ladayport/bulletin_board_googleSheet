@@ -12,11 +12,21 @@ const EditBulletin = () => {
     const [preview, setPreview] = useState(null);
     const [originalData, setOriginalData] = useState(null);
 
+    // 格式轉換輔助：將 YYYY/MM/DD 與 HH:mm:ss 轉為 HTML datetime-local 格式 (YYYY-MM-DDTHH:mm)
+    const toInputFormat = (dateStr, timeStr) => {
+        if (!dateStr) return '';
+        const day = dateStr.replace(/\//g, '-');
+        const time = timeStr ? timeStr.slice(0, 5) : '00:00';
+        return `${day}T${time}`;
+    };
+
     const [form, setForm] = useState({
         title: '',
-        category: '公告',
+        category: '公告通知',
         content: '',
         isEmergency: false,
+        startDate: '',
+        endDate: '',
         fileUrl: '',
         fileType: '',
         fileData: '',
@@ -29,6 +39,7 @@ const EditBulletin = () => {
         const loadBulletin = async () => {
             try {
                 setLoadingData(true);
+                // 這裡使用 getHomeData 取得所有公告，以便尋找特定 ID (GAS 目前 getHomeData 會回傳所有 active/deleted)
                 const result = await api.get('getHomeData');
 
                 if (result.success && result.bulletins) {
@@ -38,9 +49,16 @@ const EditBulletin = () => {
                         setOriginalData(bulletin);
                         setForm({
                             title: bulletin.title || '',
-                            category: bulletin.category || '公告',
+                            // 同步分類代碼：確保與 AddAnnouncement/CategoryPage 一致
+                            category: (bulletin.category === '公告' ? '公告通知' :
+                                bulletin.category === '活動' ? '活動通知' :
+                                    bulletin.category === '會議' ? '會議通知' :
+                                        bulletin.category === '失物' ? '失物招領' :
+                                            bulletin.category === '其他' ? '其他通知' : bulletin.category) || '公告通知',
                             content: bulletin.content || '',
                             isEmergency: bulletin.isUrgent === 'Y',
+                            startDate: toInputFormat(bulletin.startDate, bulletin.startTime),
+                            endDate: toInputFormat(bulletin.endDate, bulletin.endTime),
                             fileUrl: bulletin.fileUrl || '',
                             fileType: bulletin.fileType || '',
                             fileData: '',
@@ -101,8 +119,14 @@ const EditBulletin = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        // 基本必填檢查
         if (!form.title || !form.content) {
             alert('請填寫完整資訊');
+            return;
+        }
+        // 日期必填檢查
+        if (!form.startDate || !form.endDate) {
+            alert('開始日期與結束日期為必填項');
             return;
         }
 
@@ -115,6 +139,8 @@ const EditBulletin = () => {
             content: form.content,
             category: form.category,
             isUrgent: form.isEmergency ? 'Y' : '',
+            startDate: form.startDate, // 新增日期時間傳送
+            endDate: form.endDate,
             originalFileUrl: form.fileUrl,
             fileType: form.hasNewFile ? form.fileType : originalData?.fileType || '',
         };
@@ -130,7 +156,7 @@ const EditBulletin = () => {
 
             if (result.success) {
                 alert('修改成功！');
-                window.close();
+                window.close(); // 編輯通常是在新分頁開啟
             } else {
                 throw new Error(result.message || '修改失敗');
             }
@@ -159,6 +185,7 @@ const EditBulletin = () => {
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
+                {/* 緊急公告勾選 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', backgroundColor: '#fef2f2', borderRadius: '8px', border: '1px solid #fee2e2' }}>
                     <input
                         type="checkbox"
@@ -172,6 +199,7 @@ const EditBulletin = () => {
                     </label>
                 </div>
 
+                {/* 標題與分類 */}
                 <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: '16px' }}>
                     <div>
                         <label style={{ display: 'block', marginBottom: '8px' }}>公告標題</label>
@@ -190,16 +218,40 @@ const EditBulletin = () => {
                             onChange={e => setForm({ ...form, category: e.target.value })}
                             style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
                         >
-                            <option value="公告">公告通知</option>
-                            <option value="活動">活動通知</option>
-                            <option value="會議">會議通知</option>
-                            <option value="失物">失物招領</option>
-                            <option value="其他">其他通知</option>
-                            <option value="QA">Q&A</option>
+                            <option value="公告通知">公告通知</option>
+                            <option value="活動通知">活動通知</option>
+                            <option value="會議通知">會議通知</option>
+                            <option value="失物招領">失物招領</option>
+                            <option value="其他通知">其他通知</option>
                         </select>
                     </div>
                 </div>
 
+                {/* 開始與結束日期時間 */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '8px' }}>開始時間</label>
+                        <input
+                            type="datetime-local"
+                            value={form.startDate}
+                            onChange={e => setForm({ ...form, startDate: e.target.value })}
+                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '8px' }}>結束時間</label>
+                        <input
+                            type="datetime-local"
+                            value={form.endDate}
+                            onChange={e => setForm({ ...form, endDate: e.target.value })}
+                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
+                            required
+                        />
+                    </div>
+                </div>
+
+                {/* 詳細內容 */}
                 <div>
                     <label style={{ display: 'block', marginBottom: '8px' }}>詳細內容</label>
                     <textarea
@@ -211,6 +263,7 @@ const EditBulletin = () => {
                     />
                 </div>
 
+                {/* 附件處理 */}
                 <div style={{ border: '2px dashed #ddd', padding: '20px', borderRadius: '12px' }}>
                     <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>附件上傳</label>
 
@@ -250,6 +303,7 @@ const EditBulletin = () => {
                     )}
                 </div>
 
+                {/* 按鈕區域 */}
                 <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end' }}>
                     <button
                         type="button"

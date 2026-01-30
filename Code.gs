@@ -215,6 +215,11 @@ function handlePostAction(action, data) {
       }
 
     case 'addBulletin':
+      // 校驗必填欄位
+      if (!data.startDate || !data.endDate) {
+        return responseJSON({ success: false, message: '開始日期與結束日期為必填項' });
+      }
+
       const sheet = ss.getSheetByName('公佈欄資料');
       if (!sheet) return { success: false, message: '找不到 [公佈欄資料] 工作表' };
 
@@ -223,14 +228,22 @@ function handlePostAction(action, data) {
         fileUrl = saveFileToDrive(data.fileData, data.fileName, data.fileType);
       }
 
-      const newId = new Date().getTime().toString();
-      const now = new Date();
+      // 處理開始與結束日期時間
+      const startDateTime = new Date(data.startDate);
+      const endDateTime = new Date(data.endDate);
       
       sheet.appendRow([
-        newId, data.title, data.content, data.category,
-        formatDate(now), formatTime(now),
-        '', '', // 結束日期/時間
-        data.isUrgent || '', fileUrl, data.fileType,
+        newId, 
+        data.title, 
+        data.content, 
+        data.category,
+        formatDate(startDateTime), 
+        formatTime(startDateTime),
+        formatDate(endDateTime), 
+        formatTime(endDateTime), 
+        data.isUrgent || '', 
+        fileUrl, 
+        data.fileType,
         '' // 狀態
       ]);
 
@@ -278,6 +291,11 @@ function updateBulletin(ss, data, isDelete) {
     return { success: true, message: '刪除成功' };
     
   } else {
+    // 修改時也校驗日期
+    if (!data.startDate || !data.endDate) {
+      return { success: false, message: '開始日期與結束日期為必填項' };
+    }
+
     // 記錄修改前的數據以便對比
     const oldTitle = rows[rowIndex][1];
     const oldContent = rows[rowIndex][2];
@@ -295,6 +313,23 @@ function updateBulletin(ss, data, isDelete) {
     sheet.getRange(actualRow, 2).setValue(data.title);
     sheet.getRange(actualRow, 3).setValue(data.content);
     sheet.getRange(actualRow, 4).setValue(data.category);
+    
+    // 處理日期與時間更新
+    if (data.startDate) {
+      const startDateTime = new Date(data.startDate);
+      sheet.getRange(actualRow, 5).setValue(formatDate(startDateTime));
+      sheet.getRange(actualRow, 6).setValue(formatTime(startDateTime));
+    }
+    if (data.endDate) {
+      const endDateTime = new Date(data.endDate);
+      sheet.getRange(actualRow, 7).setValue(formatDate(endDateTime));
+      sheet.getRange(actualRow, 8).setValue(formatTime(endDateTime));
+    } else {
+      // 若清空結束日期
+      sheet.getRange(actualRow, 7).setValue('');
+      sheet.getRange(actualRow, 8).setValue('');
+    }
+
     sheet.getRange(actualRow, 9).setValue(data.isUrgent || '');
     sheet.getRange(actualRow, 10).setValue(newFileUrl);
     sheet.getRange(actualRow, 11).setValue(data.fileType);

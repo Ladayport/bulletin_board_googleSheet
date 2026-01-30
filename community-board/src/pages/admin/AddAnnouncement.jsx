@@ -73,6 +73,7 @@ const AddAnnouncement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title || !form.content) return alert('請填寫完整資訊');
+    if (!form.startDate || !form.endDate) return alert('開始日期與結束日期為必填項');
 
     setLoading(true);
 
