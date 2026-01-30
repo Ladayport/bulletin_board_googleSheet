@@ -132,11 +132,8 @@ const CategoryPage = () => {
                         }
                     }
 
-                    // B. 檢查公告是否已發布 (開始時間是否小於現在)
-                    if (isVisible && b.validStart > now) {
-                        isVisible = false;
-                    }
-
+                    // 【特別說明】分類頁不限制「今日是否發布」，
+                    // 直接依據使用者選取的日期範圍顯示公告 (例如預設包含未來 60 天的資料)
                     if (isVisible) {
                         filteredList.push(b);
                     }
