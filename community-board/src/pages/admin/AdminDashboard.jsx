@@ -39,15 +39,15 @@ const AdminDashboard = () => {
                     </div>
                 </Card>
 
-                {/* 功能卡片 2: 管理列表 (暫未實作) */}
-                <Card style={{ opacity: 0.6, cursor: 'not-allowed' }}>
+                {/* 功能卡片 2: 管理列表 */}
+                <Card onClick={() => navigate('/admin/manage')} className="interactive">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div style={{ background: '#f3f4f6', padding: '16px', borderRadius: '50%', color: '#9ca3af' }}>
+                        <div style={{ background: '#fef3c7', padding: '16px', borderRadius: '50%', color: '#f59e0b' }}>
                             <FileText size={40} />
                         </div>
                         <div>
                             <h3>管理現有公告</h3>
-                            <p style={{ color: 'var(--text-muted)' }}>編輯或刪除已發佈的資訊 (開發中)</p>
+                            <p style={{ color: 'var(--text-muted)' }}>編輯或刪除已發佈的資訊</p>
                         </div>
                     </div>
                 </Card>

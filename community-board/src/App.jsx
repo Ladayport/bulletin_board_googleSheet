@@ -5,6 +5,8 @@ import CategoryPage from './pages/CategoryPage';
 import ScrollToTop from './components/ui/ScrollToTop';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AddAnnouncement from './pages/admin/AddAnnouncement';
+import ManageBulletins from './pages/admin/ManageBulletins';
+import EditBulletin from './pages/admin/EditBulletin';
 import PrivateRoute from './components/layout/PrivateRoute';
 
 function App() {
@@ -21,6 +23,8 @@ function App() {
                 <Route element={<PrivateRoute />}>
                     <Route path="/admin" element={<AdminDashboard />} />
                     <Route path="/admin/add" element={<AddAnnouncement />} />
+                    <Route path="/admin/manage" element={<ManageBulletins />} />
+                    <Route path="/admin/edit/:id" element={<EditBulletin />} />
                 </Route>
             </Routes>
         </Router>

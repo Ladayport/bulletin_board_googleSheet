@@ -57,5 +57,26 @@ export const api = {
       console.error('API GET Error:', error);
       throw error;
     }
+  },
+
+  /**
+   * 依類別與日期範圍查詢公告
+   */
+  getBulletinsByFilter: async (category, startDate, endDate) => {
+    return api.get('getBulletinsByFilter', { category, startDate, endDate });
+  },
+
+  /**
+   * 編輯公告
+   */
+  editBulletin: async (bulletinData) => {
+    return api.post('editBulletin', bulletinData);
+  },
+
+  /**
+   * 刪除公告（軟刪除）
+   */
+  deleteBulletin: async (id, operator) => {
+    return api.post('deleteBulletin', { id, operator });
   }
 };
