@@ -28,36 +28,58 @@ const Home = () => {
 
       if (data.success) {
         setSiteTitle(data.siteTitle);
-        setBulletins(data.bulletins || []);
-        // 將 handleCategoryClick 傳遞給 FeatureGrid (透過 stats 物件或獨立 props)
-        // 為了不破壞現有結構，我們將 handleCategoryClick 包在 stats 裡傳遞，或在 FeatureGrid 接收獨立 prop
-        // 但上一步我改的是 props.stats.onCategoryClick... 用獨立 prop 比較乾淨，但 CodeGen 上一步寫在 stats 判斷。
-        // Let's pass it as a separate prop in JSX, but modify FeatureGrid to accept it properly first? 
-        // No, I modified FeatureGrid to check `stats.onCategoryClick`. Let's stick to that or better fixes.
-        // Actually, previous step: `if (stats.onCategoryClick)`. So I must inject it into stats object here.
-        setStats({
-          ...data.stats,
-          onCategoryClick: (category) => {
-            setFilterCategory(category);
-            // Scroll to list
-            const element = document.getElementById('bulletin-section');
-            if (element) element.scrollIntoView({ behavior: 'smooth' });
-          }
-        });
+        setStats(data.stats);
 
-        // 篩選緊急公告
+        // 篩選緊急公告 ticker
         const emergencies = (data.bulletins || [])
-          .filter(b => b.category === '緊急' || b.title.includes('【緊急】')) // 簡單判斷
+          .filter(b => b.isUrgent === 'Y')
           .map(b => b.title);
         setEmergencyMessages(emergencies);
 
-        // 標記緊急屬性
-        const processedBulletins = (data.bulletins || []).map(b => ({
-          ...b,
-          // 支援 GAS 回傳的 isUrgent (Y/N) 或其他判斷方式
-          isEmergency: b.isUrgent === 'Y' || b.category === '緊急' || b.title.includes('【緊急】')
-        }));
-        setBulletins(processedBulletins);
+        // 資料正規化 (Category Normalization)
+        const categoryMap = {
+          '公告': '公告通知',
+          '活動': '活動通知',
+          '會議': '會議通知',
+          '失物': '失物招領',
+          '其他': '其他通知',
+          'QA': 'Q&A'
+        };
+
+        const now = new Date(); // client system time
+
+        const validBulletins = (data.bulletins || []).map(b => {
+          // Mapping Category
+          const normalizedCategory = categoryMap[b.category] || b.category;
+
+          // Parse Date/Time for validity check
+          // Format: YYYY/MM/DD and HH:mm:ss
+          const startStr = `${b.startDate} ${b.startTime || '00:00:00'}`;
+          const endStr = `${b.endDate} ${b.endTime || '23:59:59'}`;
+          const start = new Date(startStr);
+          const end = new Date(endStr);
+
+          // If date is invalid, assume valid? Or skip? Let's check validity if date string exists.
+          // GAS formatDate returns specific format.
+
+          return {
+            ...b,
+            category: normalizedCategory,
+            isEmergency: b.isUrgent === 'Y',
+            validStart: !isNaN(start) ? start : null,
+            validEnd: !isNaN(end) ? end : null
+          };
+        }).filter(b => {
+          // Filter Logic:
+          // Start Date/Time <= Now
+          // End Date/Time >= Now (if endDate exists)
+          if (!b.validStart) return true; // checking... assume valid if no date set? usually bulletins have date.
+          if (b.validStart > now) return false; // Future
+          if (b.validEnd && b.validEnd < now) return false; // Expired
+          return true;
+        });
+
+        setBulletins(validBulletins);
 
       } else {
         console.error('API Error:', data.message);
@@ -73,17 +95,18 @@ const Home = () => {
     document.title = siteTitle;
   }, [siteTitle]);
 
-  // 排序與篩選邏輯
-  const filteredBulletins = bulletins.filter(b => {
-    if (filterCategory === 'all') return true;
-    return b.category === filterCategory;
-  });
-
-  const sortedBulletins = [...filteredBulletins].sort((a, b) => {
+  // 排序與顯示邏輯 (Max 15)
+  // 1. Emergency (Y) Top
+  // 2. Start Date + Time (Newest First)
+  const sortedBulletins = [...bulletins].sort((a, b) => {
     if (a.isEmergency && !b.isEmergency) return -1;
     if (!a.isEmergency && b.isEmergency) return 1;
-    return (b.date || '').localeCompare(a.date || '');
-  });
+    // Both same emergency status, sort by date desc
+    const dateA = a.validStart || new Date(0);
+    const dateB = b.validStart || new Date(0);
+    return dateB - dateA;
+  }).slice(0, 15); // Max 15 items in Home
+
 
   return (
     <div className="fade-in">
@@ -99,20 +122,7 @@ const Home = () => {
 
         <section id="bulletin-section">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <h2 style={{ color: 'var(--text-muted)', margin: 0 }}>
-                {filterCategory === 'all' ? '最新公告' : `${filterCategory} (${sortedBulletins.length})`}
-              </h2>
-              {filterCategory !== 'all' && (
-                <button
-                  onClick={() => setFilterCategory('all')}
-                  className="btn btn-secondary"
-                  style={{ padding: '4px 12px', fontSize: '0.85rem' }}
-                >
-                  顯示全部
-                </button>
-              )}
-            </div>
+            <h2 style={{ color: 'var(--text-muted)', margin: 0 }}>最新公告</h2>
             {loading && <span style={{ fontSize: '0.9rem', color: 'var(--primary-color)' }}>更新中...</span>}
           </div>
 
@@ -145,23 +155,31 @@ const Home = () => {
               {selectedBulletin.content}
             </div>
 
-            {selectedBulletin.fileUrl && (
-              <div style={{ marginTop: '20px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-                <h4 style={{ fontSize: '1rem', marginBottom: '8px' }}>附件</h4>
-                {selectedBulletin.fileType && selectedBulletin.fileType.startsWith('image/') ? (
-                  <img src={selectedBulletin.fileUrl} alt="附件" style={{ maxWidth: '100%', borderRadius: '4px' }} />
-                ) : (
-                  <a
-                    href={selectedBulletin.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-primary"
-                    style={{ display: 'inline-flex', textDecoration: 'none' }}
-                  >
-                    開啟附件
-                  </a>
-                )}
+            {/* Improved Image Handling */}
+            {(selectedBulletin.fileType && selectedBulletin.fileType.startsWith('image/')) || (selectedBulletin.fileUrl && selectedBulletin.fileUrl.includes('drive.google.com')) ? (
+              <div style={{ cursor: 'pointer' }} onClick={() => window.open(selectedBulletin.fileUrl, '_blank')}>
+                <img
+                  src={selectedBulletin.fileUrl}
+                  alt="附件縮圖"
+                  style={{ maxWidth: '100%', borderRadius: '4px', border: '1px solid #eee' }}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.style.display = 'none';
+                    e.target.parentNode.innerHTML += '<a href="' + selectedBulletin.fileUrl + '" target="_blank" class="btn btn-primary">開啟圖片</a>';
+                  }}
+                />
+                <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#666', marginTop: '4px' }}>(點擊查看大圖)</p>
               </div>
+            ) : (
+              <a
+                href={selectedBulletin.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary"
+                style={{ display: 'inline-flex', textDecoration: 'none' }}
+              >
+                開啟附件
+              </a>
             )}
           </div>
         )}

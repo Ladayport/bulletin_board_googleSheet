@@ -112,26 +112,33 @@ function handleGetAction(action, params) {
         const rows = dataSheet.getDataRange().getValues();
         rows.shift(); // 移除標題列
         
-        // 對應欄位: id(0), 標題(1), 內容(2), 類別(3), 開始日期(4), 檔案連結(9), 檔案類型(10)
+        // 對應欄位: id(0), 標題(1), 內容(2), 類別(3), 開始日期(4), 開始時間(5), 結束日期(6), 結束時間(7), 緊急公告標記(8), 檔案連結(9), 檔案類型(10)
         bulletins = rows.map(row => ({
           id: row[0],
           title: row[1],
           content: row[2],
           category: row[3],
-          date: formatDate(row[4]),
+          startDate: formatDate(row[4]),
+          startTime: formatTime(row[5]),
+          endDate: formatDate(row[6]),
+          endTime: formatTime(row[7]),
+          isUrgent: row[8],
           fileUrl: row[9],
           fileType: row[10]
-        })).reverse().slice(0, 20);
+        })).reverse(); // Remove slice here to let frontend filter valid ones first, or slice after filtering in GAS?
+        // User logic is complex (Date/Time check). Better to return all (or valid ones) and let frontend sort/slice for display flexibility, 
+        // OR filter in GAS. User said "Max 15 items" on Home. Let's return recent 50 and filter in frontend to ensure we have enough after filtering.
+
       }
 
       // 3. 取得統計數據
-      // 對應類別: A0010(公告通知), B0020(活動通知), C0030(會議通知), D0040(失物招領), E0050(其他通知), QA(QA)
+      // 對應類別: A0010(公告), B0020(活動), C0030(會議), D0040(失物), E0050(其他), QA(QA)
       const stats = {
-        notice: bulletins.filter(b => b.category === '公告通知').length,
-        activities: bulletins.filter(b => b.category === '活動通知').length,
-        meeting: bulletins.filter(b => b.category === '會議通知').length,
-        lostAndFound: bulletins.filter(b => b.category === '失物招領').length,
-        others: bulletins.filter(b => b.category === '其他通知').length,
+        notice: bulletins.filter(b => b.category === '公告').length,
+        activities: bulletins.filter(b => b.category === '活動').length,
+        meeting: bulletins.filter(b => b.category === '會議').length,
+        lostAndFound: bulletins.filter(b => b.category === '失物').length,
+        others: bulletins.filter(b => b.category === '其他').length,
         qa: bulletins.filter(b => b.category === 'QA').length
       };
 
@@ -279,7 +286,7 @@ function formatTime(date) {
 
 1. **環境變數**：在專案根目錄 `.env` 填入上述步驟產生的 URL。
    ```text
-   VITE_GAS_URL=https://script.google.com/macros/s/AKfycbx-ojIJHoU01KNQCR_-Uw20iLDamIHHuqSUyRpY6zEBQZIkyESMn6BBfTa2SVEh_14/exec
+   VITE_GAS_URL=https://script.google.com/macros/s/AKfycbzYPvie76vCcVdtF9-_FpuIgvMouanQ15ilIrsXgcPHM_F6zATOqNND3DfkxQJTAPqZ/exec
    ```
 
 2. **分類名稱對應**：
