@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import Modal from '../components/ui/Modal';
 import { api } from '../services/api';
 
+
 const CategoryPage = () => {
     const { type } = useParams();
     const navigate = useNavigate();
@@ -156,34 +157,23 @@ const CategoryPage = () => {
                             {selectedBulletin.content}
                         </div>
                         {selectedBulletin.fileUrl && (
-                            <div style={{ marginTop: '20px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-                                <h4 style={{ fontSize: '1rem', marginBottom: '8px' }}>附件</h4>
-                                {/* Improved Image Handling */}
-                                {(selectedBulletin.fileType && selectedBulletin.fileType.startsWith('image/')) ? (
-                                    <div style={{ cursor: 'pointer' }} onClick={() => window.open(selectedBulletin.fileUrl, '_blank')}>
-                                        <img
-                                            src={selectedBulletin.fileUrl}
-                                            alt="附件縮圖"
-                                            style={{ maxWidth: '100%', borderRadius: '4px', border: '1px solid #eee' }}
-                                            onError={(e) => {
-                                                e.target.onerror = null;
-                                                e.target.style.display = 'none';
-                                                e.target.parentNode.innerHTML = '<a href="' + selectedBulletin.fileUrl + '" target="_blank" class="btn btn-primary">開啟圖片附件</a>';
-                                            }}
-                                        />
-                                        <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#666', marginTop: '4px' }}>(點擊查看大圖)</p>
-                                    </div>
-                                ) : (
-                                    <a href={selectedBulletin.fileUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-                                        開啟附件
-                                    </a>
-                                )}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">附件</label>
+                                <a
+                                    href={selectedBulletin.fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    開啟附件
+                                </a>
                             </div>
                         )}
                     </div>
-                )}
-            </Modal>
-        </div>
+                )
+                }
+            </Modal >
+        </div >
     );
 };
 

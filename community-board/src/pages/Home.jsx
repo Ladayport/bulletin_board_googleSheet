@@ -5,6 +5,7 @@ import FeatureGrid from '../components/home/FeatureGrid';
 import EmergencyTicker from '../components/home/EmergencyTicker';
 import Modal from '../components/ui/Modal';
 import { api } from '../services/api';
+
 // 保留 mockData 作為 fallback 
 import { mockSiteData, mockStats } from '../utils/mockData';
 
@@ -160,39 +161,27 @@ const Home = () => {
               <div style={{ marginTop: '20px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
                 <h4 style={{ fontSize: '1rem', marginBottom: '8px' }}>附件</h4>
 
-                {/* 判定是否為圖片 (透過 fileType 或 副檔名檢查) */}
-                {(selectedBulletin.fileType && selectedBulletin.fileType.startsWith('image/')) ? (
-                  <div style={{ cursor: 'pointer' }} onClick={() => window.open(selectedBulletin.fileUrl, '_blank')}>
-                    <img
-                      src={selectedBulletin.fileUrl}
-                      alt="附件縮圖"
-                      style={{ maxWidth: '100%', borderRadius: '4px', border: '1px solid #eee' }}
-                      onError={(e) => {
-                        // 圖片載入失敗時 (例如非公開連結)，顯示按鈕作為備案
-                        e.target.onerror = null;
-                        e.target.style.display = 'none';
-                        e.target.parentNode.innerHTML = '<a href="' + selectedBulletin.fileUrl + '" target="_blank" class="btn btn-primary">開啟圖片附件</a>';
-                      }}
-                    />
-                    <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#666', marginTop: '4px' }}>(點擊查看大圖)</p>
+                {(() => {
+                  const isImage = (
+                    (selectedBulletin.fileType && selectedBulletin.fileType.startsWith('image/')) ||
+                    (!selectedBulletin.fileType && selectedBulletin.fileUrl.match(/\.(jpeg|jpg|gif|png)$/i)) ||
+                    (!selectedBulletin.fileType && selectedBulletin.fileUrl.includes('drive.google.com') && !selectedBulletin.fileUrl.toLowerCase().endsWith('.pdf'))
+                  );
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">附件</label>
+                    <a
+                      href={selectedBulletin.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                      開啟附件
+                    </a>
                   </div>
-                ) : (
-                  // 非圖片檔案 (PDF, Doc, etc) -> 顯示按鈕
-                  <a
-                    href={selectedBulletin.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-primary"
-                    style={{ display: 'inline-flex', textDecoration: 'none' }}
-                  >
-                    開啟附件
-                  </a>
-                )}
+            )}
               </div>
             )}
-          </div>
-        )}
-      </Modal>
+          </Modal>
     </div>
   );
 };
