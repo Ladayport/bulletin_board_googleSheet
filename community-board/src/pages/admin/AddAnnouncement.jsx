@@ -3,6 +3,7 @@ import { compressImage, fileToBase64 } from '../../utils/imageUtils';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import { authService } from '../../services/auth';
+import LoadingOverlay from '../../components/ui/LoadingOverlay';
 
 const AddAnnouncement = () => {
   const navigate = useNavigate();
@@ -110,6 +111,7 @@ const AddAnnouncement = () => {
 
   return (
     <div className="card fade-in" style={{ maxWidth: '800px', margin: '20px auto' }}>
+      <LoadingOverlay show={loading} message="正在發佈公告，請稍候..." />
       <h2 style={{ marginBottom: '20px', color: 'var(--primary-color)' }}>發佈新公告</h2>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -217,7 +219,7 @@ const AddAnnouncement = () => {
             className="btn btn-primary"
             disabled={loading}
           >
-            {loading ? '發佈中...' : '確認發佈'}
+            確認發佈
           </button>
         </div>
 

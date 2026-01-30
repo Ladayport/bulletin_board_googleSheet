@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import { authService } from '../../services/auth';
 import { compressImage, fileToBase64 } from '../../utils/imageUtils';
+import LoadingOverlay from '../../components/ui/LoadingOverlay';
 
 const EditBulletin = () => {
     const { id } = useParams();
@@ -178,6 +179,7 @@ const EditBulletin = () => {
 
     return (
         <div className="card fade-in" style={{ maxWidth: '800px', margin: '20px auto' }}>
+            <LoadingOverlay show={loading || loadingData} message={loadingData ? "正在載入公告資料..." : "正在儲存修改，請稍候..."} />
             <h2 style={{ marginBottom: '20px', color: 'var(--primary-color)' }}>編輯公告</h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '20px' }}>
                 公告 ID: {id}
@@ -318,7 +320,7 @@ const EditBulletin = () => {
                         className="btn btn-primary"
                         disabled={loading}
                     >
-                        {loading ? '儲存中...' : '儲存修改'}
+                        儲存修改
                     </button>
                 </div>
 

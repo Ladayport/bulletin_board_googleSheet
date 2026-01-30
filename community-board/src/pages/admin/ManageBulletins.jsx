@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import { authService } from '../../services/auth';
+import LoadingOverlay from '../../components/ui/LoadingOverlay';
 
 const ManageBulletins = () => {
     const navigate = useNavigate();
@@ -87,6 +88,7 @@ const ManageBulletins = () => {
 
     return (
         <div className="card fade-in" style={{ maxWidth: '1200px', margin: '20px auto' }}>
+            <LoadingOverlay show={loading} />
             <h2 style={{ marginBottom: '20px', color: 'var(--primary-color)' }}>管理現有公告</h2>
 
             {/* 查詢條件區塊 */}
@@ -154,7 +156,7 @@ const ManageBulletins = () => {
                         disabled={loading}
                         style={{ height: '42px' }}
                     >
-                        {loading ? '查詢中...' : '查詢'}
+                        查詢
                     </button>
                 </div>
             </div>

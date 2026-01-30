@@ -4,6 +4,7 @@ import BulletinSection from '../components/home/BulletinSection';
 import { ArrowLeft } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Modal from '../components/ui/Modal';
+import LoadingOverlay from '../components/ui/LoadingOverlay';
 import { api } from '../services/api';
 
 /**
@@ -169,6 +170,7 @@ const CategoryPage = () => {
 
     return (
         <div className="fade-in">
+            <LoadingOverlay show={loading} />
             <Header title="幸福社區雲端公佈欄" />
 
             <main className="container">
@@ -241,14 +243,12 @@ const CategoryPage = () => {
                 <h2 style={{ marginBottom: '24px', color: 'var(--text-main)' }}>{activeTab}</h2>
 
                 {/* 公告內容區 */}
-                {loading ? (
-                    <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>載入中...</div>
-                ) : displayBulletins.length > 0 ? (
+                {displayBulletins.length > 0 ? (
                     <BulletinSection
                         bulletins={displayBulletins}
                         onBulletinClick={(item) => setSelectedBulletin(item)}
                     />
-                ) : (
+                ) : !loading && (
                     <div style={{
                         padding: '40px', textAlign: 'center', color: 'var(--text-muted)',
                         backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-lg)'

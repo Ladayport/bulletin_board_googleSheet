@@ -4,6 +4,7 @@ import BulletinSection from '../components/home/BulletinSection';
 import FeatureGrid from '../components/home/FeatureGrid';
 import EmergencyTicker from '../components/home/EmergencyTicker';
 import Modal from '../components/ui/Modal';
+import LoadingOverlay from '../components/ui/LoadingOverlay';
 import { api } from '../services/api';
 
 // 保留 mockData 作為初始或失敗時的備案
@@ -161,6 +162,7 @@ const Home = () => {
 
   return (
     <div className="fade-in">
+      <LoadingOverlay show={loading} />
       <Header title={siteTitle} />
 
       <main className="container">
@@ -177,11 +179,10 @@ const Home = () => {
         <section id="bulletin-section">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h2 style={{ color: 'var(--text-muted)', margin: 0 }}>最新公告</h2>
-            {loading && <span style={{ fontSize: '0.9rem', color: 'var(--primary-color)' }}>更新中...</span>}
           </div>
 
-          {loading && bulletins.length === 0 ? (
-            <div style={{ padding: '40px', textAlign: 'center', color: '#999' }}>載入資料中...</div>
+          {bulletins.length === 0 && !loading ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: '#999' }}>目前暫無公告</div>
           ) : (
             <BulletinSection
               bulletins={displayList}
