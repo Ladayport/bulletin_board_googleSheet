@@ -189,28 +189,32 @@ const ManageBulletins = () => {
                                         border: '1px solid #e5e7eb',
                                         borderRadius: '8px',
                                         display: 'grid',
-                                        gridTemplateColumns: '100px 1fr 120px 120px 120px 200px',
+                                        gridTemplateColumns: '110px 1fr 100px 160px',
                                         gap: '16px',
                                         alignItems: 'center',
                                         opacity: bulletin.status === 'D' ? 0.65 : 1,
-                                        transition: 'all 0.2s ease'
+                                        transition: 'all 0.2s ease',
+                                        overflow: 'hidden'
                                     }}
                                 >
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                        ID: {bulletin.id}
+                                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+                                        {bulletin.startDate}
                                     </div>
 
-                                    <div>
-                                        <div style={{ fontWeight: '500', marginBottom: '4px', textDecoration: bulletin.status === 'D' ? 'line-through' : 'none' }}>
+                                    <div style={{ overflow: 'hidden' }}>
+                                        <div style={{
+                                            fontWeight: '500',
+                                            marginBottom: '4px',
+                                            textDecoration: bulletin.status === 'D' ? 'line-through' : 'none',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                        }}>
                                             {bulletin.title}
                                         </div>
                                         <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                                             {bulletin.category}
                                         </div>
-                                    </div>
-
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                        {bulletin.startDate}
                                     </div>
 
                                     <div>
@@ -224,34 +228,6 @@ const ManageBulletins = () => {
                                                 fontWeight: '500'
                                             }}>
                                                 緊急
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        {bulletin.status === 'D' ? (
-                                            <span style={{
-                                                padding: '4px 8px',
-                                                backgroundColor: '#fee2e2',
-                                                color: '#dc2626',
-                                                borderRadius: '4px',
-                                                fontSize: '0.75rem',
-                                                fontWeight: '500',
-                                                border: '1px solid #fecaca'
-                                            }}>
-                                                已刪除
-                                            </span>
-                                        ) : (
-                                            <span style={{
-                                                padding: '4px 8px',
-                                                backgroundColor: '#f0fdf4',
-                                                color: '#16a34a',
-                                                borderRadius: '4px',
-                                                fontSize: '0.75rem',
-                                                fontWeight: '500',
-                                                border: '1px solid #bbf7d0'
-                                            }}>
-                                                正常顯示
                                             </span>
                                         )}
                                     </div>
