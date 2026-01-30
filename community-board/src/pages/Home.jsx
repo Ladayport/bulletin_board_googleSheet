@@ -64,6 +64,10 @@ const Home = () => {
         // 3. 處理公告清單：類別正規化與有效日期檢查
         for (let j = 0; j < rawBulletins.length; j++) {
           const b = rawBulletins[j];
+
+          // 0. 排除狀態為 'D' 的已刪除資料
+          if (b.status === 'D') continue;
+
           const normalizedCategory = categoryMap[b.category] || b.category;
 
           // 解析開始與結束時間
@@ -112,14 +116,11 @@ const Home = () => {
 
         setBulletins(validList);
 
-        // --- 效能優化：資料預載 (Pre-loading) ---
-        // 雖然首頁強制抓取最新資料，但我們可以將結果存入快取
-        // 讓使用者切換到「分類頁」時能享有「秒開」的體驗
-        const cacheData = {
-          updateTime: new Date().getTime(),
-          data: validList
-        };
-        localStorage.setItem('bulletin_cache_all', JSON.stringify(cacheData));
+        // 由於後端 Code.gs 已完成精確的「今日有效」筆數統計，
+        // 前端直接使用 backend 回傳的 stats 即可 (在前面 data.success 時已 setStats)。
+
+        // 已移除資料預載 (Pre-loading) 快取機制
+        // 使用者要求每一次切換頁面皆重新向後端抓取最新資料，以確保資料即時性
 
       } else {
         console.error('API Error:', data.message);

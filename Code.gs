@@ -73,23 +73,47 @@ function handleGetAction(action, params) {
             endTime: formatTime(r[7]),
             isUrgent: r[8],
             fileUrl: r[9],
-            fileType: r[10]
+            fileType: r[10],
+            status: r[11] || '' // 新增狀態欄位 (例如 'D' 為刪除)
           });
         }
         // 反轉陣列讓最新公告在最前面
         bulletins = tempBulletins.reverse();
       }
 
-      // 3. 計算各類別統計數據 (初始化為 0)
+      // 3. 計算各類別統計數據 (僅計算今日有效的公告)
       const stats = { notice: 0, activities: 0, meeting: 0, lostAndFound: 0, others: 0, qa: 0 };
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // 僅比較日期部分
+
       for (let k = 0; k < bulletins.length; k++) {
         const b = bulletins[k];
-        if (b.category === '公告') stats.notice++;
-        else if (b.category === '活動') stats.activities++;
-        else if (b.category === '會議') stats.meeting++;
-        else if (b.category === '失物') stats.lostAndFound++;
-        else if (b.category === '其他') stats.others++;
-        else if (b.category === 'QA') stats.qa++;
+        
+        // 解析資料中的日期 (格式為 YYYY/MM/DD)
+        const sParts = b.startDate.split('/');
+        const bStart = new Date(sParts[0], sParts[1] - 1, sParts[2]);
+        
+        let isValidToday = (bStart <= today); // 預設：已開始就算有效
+        
+        // 如果有結束日期，則需額外判斷是否已過期
+        if (b.endDate) {
+          const eParts = b.endDate.split('/');
+          const bEnd = new Date(eParts[0], eParts[1] - 1, eParts[2]);
+          bEnd.setHours(23, 59, 59, 999);
+          if (today > bEnd) {
+            isValidToday = false;
+          }
+        }
+
+        // 只有今日有效且未被刪除的，才納入統計
+        if (isValidToday && b.status !== 'D') {
+          if (b.category === '公告') stats.notice++;
+          else if (b.category === '活動') stats.activities++;
+          else if (b.category === '會議') stats.meeting++;
+          else if (b.category === '失物') stats.lostAndFound++;
+          else if (b.category === '其他') stats.others++;
+          else if (b.category === 'QA') stats.qa++;
+        }
       }
 
       // 4. 取得類別選單 (用於後台下拉選單)
@@ -122,10 +146,7 @@ function handleGetAction(action, params) {
       for (let n = 0; n < filterRows.length; n++) {
         const row = filterRows[n];
         
-        // 條件 1: 檢查是否已刪除
-        if (row.length >= 12 && (row[11] || '') === 'D') continue;
-        
-        // 條件 2: 檢查類別是否符合
+        // 條件 1: 檢查類別是否符合
         if (row[3] !== category) continue;
         
         // 條件 3: 檢查日期是否在範圍內
@@ -150,7 +171,8 @@ function handleGetAction(action, params) {
           id: fr[0], title: fr[1], content: fr[2], category: fr[3],
           startDate: formatDate(fr[4]), startTime: formatTime(fr[5]),
           endDate: formatDate(fr[6]), endTime: formatTime(fr[7]),
-          isUrgent: fr[8], fileUrl: fr[9], fileType: fr[10]
+          isUrgent: fr[8], fileUrl: fr[9], fileType: fr[10],
+          status: fr[11] || '' // 新增狀態欄位
         });
       }
 

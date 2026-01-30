@@ -72,30 +72,8 @@ const CategoryPage = () => {
      */
     const fetchData = async () => {
         try {
-            // --- 效能優化：快取優先策略 ---
-            // 優先嘗試從本機快取 (localStorage) 讀取資料
-            const cachedString = localStorage.getItem('bulletin_cache_all');
-            let hasCache = false;
-
-            if (cachedString) {
-                try {
-                    const cache = JSON.parse(cachedString);
-                    // 若快取內有資料，先行渲染，達到「秒開」效果
-                    if (cache.data && cache.data.length > 0) {
-                        setBulletins(cache.data);
-                        setLoading(false); // 停止顯示全螢幕讀取
-                        hasCache = true;
-                        console.log('[Performance] 已從本機快取預載資料。');
-                    }
-                } catch (parseErr) {
-                    console.error('快取解析失敗:', parseErr);
-                }
-            }
-
-            // 若沒有快取，則需要顯示讀取中動畫
-            if (!hasCache) {
-                setLoading(true);
-            }
+            // 進入頁面時一律顯示讀取中動畫，並向後端抓取最新資料 (取消快取機制)
+            setLoading(true);
 
             // 向後端取得最新資料 (背景同步)
             const data = await api.get('getHomeData');
@@ -122,7 +100,8 @@ const CategoryPage = () => {
                         ...b,
                         category: normalized,
                         isEmergency: b.isUrgent === 'Y',
-                        validStart: !isNaN(start.getTime()) ? start : new Date(0)
+                        validStart: !isNaN(start.getTime()) ? start : new Date(0),
+                        status: b.status || '' // 取得狀態
                     });
                 }
 
@@ -135,12 +114,19 @@ const CategoryPage = () => {
 
                 for (let j = 0; j < processedList.length; j++) {
                     const b = processedList[j];
+
+                    // 【重要】排除狀態為 'D' 的已刪除資料 (前台不顯示)
+                    if (b.status === 'D') {
+                        continue;
+                    }
+
                     let isVisible = true;
 
-                    // A. 檢查是否在使用者選取的日期範圍內
+                    // A. 檢查是否在使用者選取的日期範圍內 (預設為 20天前 ~ 60天後)
                     const bDateStr = b.startDate; // YYYY/MM/DD
                     if (bDateStr) {
                         const bDate = new Date(bDateStr.replace(/\//g, '-'));
+                        // 僅顯示開始日期在篩選區間內的公告
                         if (bDate < filterStart || bDate > filterEnd) {
                             isVisible = false;
                         }
