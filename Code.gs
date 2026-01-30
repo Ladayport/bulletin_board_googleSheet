@@ -3,13 +3,20 @@ const SHEET_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
 // ⚠️ 請在此貼上步驟 2 取得的資料夾 ID
 const IMAGE_FOLDER_ID = '1VbBxXXncyaAQdlv_x8-UYnq_LeDPgm_4'; 
 
-// --- 核心入口 ---
+/**
+ * 處理 GET 請求
+ * 主要用於讀取資料
+ */
 function doGet(e) {
   const action = e.parameter.action;
   const result = handleGetAction(action, e.parameter);
   return responseJSON(result);
 }
 
+/**
+ * 處理 POST 請求
+ * 主要用於新增、修改、刪除資料或登入
+ */
 function doPost(e) {
   try {
     const postData = JSON.parse(e.postData.contents);
@@ -21,181 +28,171 @@ function doPost(e) {
   }
 }
 
-// --- 邏輯分發 (Controller) ---
-
+/**
+ * handleGetAction: 根據 action 執行對應的資料取回邏輯
+ */
 function handleGetAction(action, params) {
   const ss = SpreadsheetApp.openById(SHEET_ID);
   
   switch(action) {
     case 'getHomeData':
-      // 1. 取得標題 (工作表: 網站設定)
+      // 1. 取得網站標題 (從「網站設定」工作表的 B2 儲存格)
       const titleSheet = ss.getSheetByName('網站設定');
       const title = titleSheet ? titleSheet.getRange("B2").getValue() : "網站設定讀取失敗";
       
-      // 2. 取得公告 (工作表: 公佈欄資料)
+      // 2. 取得公告資料 (從「公佈欄資料」工作表)
       const dataSheet = ss.getSheetByName('公佈欄資料');
       let bulletins = [];
       if (dataSheet) {
         const rows = dataSheet.getDataRange().getValues();
-        rows.shift(); // 移除標題列
+        const header = rows.shift(); // 移除標題列
         
-        // 過濾掉狀態為 'D' (刪除) 的資料
-        // 對應欄位索引: id(0)... 狀態(11)
-        // 如果狀態欄位不存在（row.length < 12），視為未刪除
-        const activeRows = rows.filter(row => {
-          if (row.length < 12) return true; // 沒有狀態欄位，視為有效資料
-          return (row[11] || '') !== 'D';
-        });
+        const activeRows = [];
+        // 使用傳統迴圈過濾掉已刪除 (狀態為 'D') 的資料
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          // 如果狀態欄位(第 12 欄,索引 11) 不是 'D',則視為有效資料
+          if (row.length < 12 || (row[11] || '') !== 'D') {
+            activeRows.push(row);
+          }
+        }
 
-        // 對應欄位: id(0), 標題(1), 內容(2), 類別(3), 開始日期(4), 開始時間(5), 結束日期(6), 結束時間(7), 緊急公告標記(8), 檔案連結(9), 檔案類型(10)
-        bulletins = activeRows.map(row => ({
-          id: row[0],
-          title: row[1],
-          content: row[2],
-          category: row[3],
-          startDate: formatDate(row[4]),
-          startTime: formatTime(row[5]),
-          endDate: formatDate(row[6]),
-          endTime: formatTime(row[7]),
-          isUrgent: row[8],
-          fileUrl: row[9],
-          fileType: row[10]
-        })).reverse(); // 反轉順序，讓最新的在前面
+        // 將原始陣列轉換為物件格式,方便前端使用
+        // 改用迴圈逐筆處理,不使用 .map()
+        const tempBulletins = [];
+        for (let j = 0; j < activeRows.length; j++) {
+          const r = activeRows[j];
+          tempBulletins.push({
+            id: r[0],
+            title: r[1],
+            content: r[2],
+            category: r[3],
+            startDate: formatDate(r[4]),
+            startTime: formatTime(r[5]),
+            endDate: formatDate(r[6]),
+            endTime: formatTime(r[7]),
+            isUrgent: r[8],
+            fileUrl: r[9],
+            fileType: r[10]
+          });
+        }
+        // 反轉陣列讓最新公告在最前面
+        bulletins = tempBulletins.reverse();
       }
 
-      // 3. 取得統計數據 (只統計未刪除的)
-      const stats = {
-        notice: bulletins.filter(b => b.category === '公告').length,
-        activities: bulletins.filter(b => b.category === '活動').length,
-        meeting: bulletins.filter(b => b.category === '會議').length,
-        lostAndFound: bulletins.filter(b => b.category === '失物').length,
-        others: bulletins.filter(b => b.category === '其他').length,
-        qa: bulletins.filter(b => b.category === 'QA').length
-      };
+      // 3. 計算各類別統計數據 (初始化為 0)
+      const stats = { notice: 0, activities: 0, meeting: 0, lostAndFound: 0, others: 0, qa: 0 };
+      for (let k = 0; k < bulletins.length; k++) {
+        const b = bulletins[k];
+        if (b.category === '公告') stats.notice++;
+        else if (b.category === '活動') stats.activities++;
+        else if (b.category === '會議') stats.meeting++;
+        else if (b.category === '失物') stats.lostAndFound++;
+        else if (b.category === '其他') stats.others++;
+        else if (b.category === 'QA') stats.qa++;
+      }
 
-      // 4. 取得類別選單 (工作表: 類別選單)
+      // 4. 取得類別選單 (用於後台下拉選單)
       const catSheet = ss.getSheetByName('類別選單');
       let categories = [];
       if (catSheet) {
         const catRows = catSheet.getDataRange().getValues();
         catRows.shift();
-        categories = catRows.map(r => ({ code: r[0], name: r[1] }));
+        for (let m = 0; m < catRows.length; m++) {
+          categories.push({ code: catRows[m][0], name: catRows[m][1] });
+        }
       }
 
       return { success: true, siteTitle: title, bulletins, stats, categories };
 
     case 'getBulletinsByFilter':
-      // 依類別與日期範圍查詢公告
+      // 依類別與日期範圍過濾公告
       const filterDataSheet = ss.getSheetByName('公佈欄資料');
       if (!filterDataSheet) return { success: false, message: '找不到 [公佈欄資料] 工作表' };
+
+      const filterRows = filterDataSheet.getDataRange().getValues();
+      filterRows.shift(); // 移除標題列
 
       const category = params.category;
       const startDate = params.startDate; // 格式: YYYY-MM-DD
       const endDate = params.endDate;     // 格式: YYYY-MM-DD
 
-      const filterRows = filterDataSheet.getDataRange().getValues();
-      filterRows.shift(); // 移除標題列
-
-      // Debug: 記錄查詢條件
-      Logger.log('查詢條件 - 類別: ' + category + ', 開始: ' + startDate + ', 結束: ' + endDate);
-      Logger.log('總資料筆數: ' + filterRows.length);
-
-      // 過濾條件：
-      // 1. 狀態不是 'D' (未刪除)
-      // 2. 類別符合
-      // 3. 開始日期在範圍內
-      const filtered = filterRows.filter(row => {
-        // 狀態檢查 (欄位 11)
-        if (row.length >= 12 && (row[11] || '') === 'D') {
-          Logger.log('過濾: 狀態為 D - ID: ' + row[0]);
-          return false;
-        }
+      const filteredRows = [];
+      // 依序執行過濾條件
+      for (let n = 0; n < filterRows.length; n++) {
+        const row = filterRows[n];
         
-        // 類別檢查 (欄位 3)
-        if (row[3] !== category) {
-          Logger.log('過濾: 類別不符 - ID: ' + row[0] + ', 類別: ' + row[3] + ' vs ' + category);
-          return false;
-        }
+        // 條件 1: 檢查是否已刪除
+        if (row.length >= 12 && (row[11] || '') === 'D') continue;
         
-        // 日期檢查 (欄位 4: 開始日期)
-        try {
-          const bulletinDate = formatDate(row[4]); // 轉換為 YYYY/MM/DD
-          Logger.log('公告日期: ' + bulletinDate + ' (原始: ' + row[4] + ')');
-          
-          // 將 YYYY/MM/DD 轉為 Date 物件
-          const dateParts = bulletinDate.split('/');
-          const bulletinDateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-          
-          // 將 YYYY-MM-DD 轉為 Date 物件
-          const filterStart = new Date(startDate);
-          const filterEnd = new Date(endDate);
-          
-          Logger.log('比較: ' + bulletinDateObj.toISOString() + ' vs ' + filterStart.toISOString() + ' ~ ' + filterEnd.toISOString());
-          
-          if (bulletinDateObj < filterStart || bulletinDateObj > filterEnd) {
-            Logger.log('過濾: 日期不在範圍 - ID: ' + row[0]);
-            return false;
-          }
-        } catch (e) {
-          Logger.log('日期解析錯誤: ' + e.toString());
-          return false;
-        }
+        // 條件 2: 檢查類別是否符合
+        if (row[3] !== category) continue;
         
-        Logger.log('通過: ID: ' + row[0]);
-        return true;
-      });
+        // 條件 3: 檢查日期是否在範圍內
+        const bDate = formatDate(row[4]); // "YYYY/MM/DD"
+        if (!bDate) continue;
+        
+        const dateParts = bDate.split('/');
+        const bulletinDateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+        const filterStart = new Date(startDate);
+        const filterEnd = new Date(endDate);
+        
+        if (bulletinDateObj >= filterStart && bulletinDateObj <= filterEnd) {
+          filteredRows.push(row);
+        }
+      }
 
-      Logger.log('過濾後筆數: ' + filtered.length);
+      // 轉換為物件列表
+      const finalBulletins = [];
+      for (let p = 0; p < filteredRows.length; p++) {
+        const fr = filteredRows[p];
+        finalBulletins.push({
+          id: fr[0], title: fr[1], content: fr[2], category: fr[3],
+          startDate: formatDate(fr[4]), startTime: formatTime(fr[5]),
+          endDate: formatDate(fr[6]), endTime: formatTime(fr[7]),
+          isUrgent: fr[8], fileUrl: fr[9], fileType: fr[10]
+        });
+      }
 
-      const filteredBulletins = filtered.map(row => ({
-        id: row[0],
-        title: row[1],
-        content: row[2],
-        category: row[3],
-        startDate: formatDate(row[4]),
-        startTime: formatTime(row[5]),
-        endDate: formatDate(row[6]),
-        endTime: formatTime(row[7]),
-        isUrgent: row[8],
-        fileUrl: row[9],
-        fileType: row[10]
-      }));
-
-      return { success: true, bulletins: filteredBulletins };
+      return { success: true, bulletins: finalBulletins };
 
     default:
       return { success: false, message: 'Unknown action' };
   }
 }
 
+/**
+ * handlePostAction: 根據 action 執行寫入或修改邏輯
+ */
 function handlePostAction(action, data) {
   const ss = SpreadsheetApp.openById(SHEET_ID);
 
   switch(action) {
     case 'login':
-      // 工作表: 帳號管理
       const userSheet = ss.getSheetByName('帳號管理');
       if (!userSheet) return { success: false, message: '找不到 [帳號管理] 工作表' };
       
       const users = userSheet.getDataRange().getValues();
-      users.shift(); // 移除 Header
+      users.shift();
       
-      // 欄位: usr_code(0), usr_pass(1), usr_name(2), grp_code(5), is_use(6)
-      const user = users.find(row => 
-        row[0] == data.username && 
-        row[1] == data.password && 
-        row[6] == 'Y'
-      );
+      let authenticatedUser = null;
+      // 遍歷所有使用者紀錄進行比對
+      for (let i = 0; i < users.length; i++) {
+        const u = users[i];
+        if (u[0] == data.username && u[1] == data.password && u[6] == 'Y') {
+          authenticatedUser = { name: u[2], role: u[5] };
+          break;
+        }
+      }
       
-      if (user) {
-        writeLog(ss, user[2], '登入系統');
-        return { success: true, token: 'gas-token-' + new Date().getTime(), user: { name: user[2], role: user[5] } };
+      if (authenticatedUser) {
+        writeLog(ss, authenticatedUser.name, '登入系統');
+        return { success: true, token: 'gas-token-' + new Date().getTime(), user: authenticatedUser };
       } else {
         return { success: false, message: '帳號密碼錯誤或帳號已停用' };
       }
 
     case 'addBulletin':
-      // 工作表: 公佈欄資料
       const sheet = ss.getSheetByName('公佈欄資料');
       if (!sheet) return { success: false, message: '找不到 [公佈欄資料] 工作表' };
 
@@ -208,109 +205,95 @@ function handlePostAction(action, data) {
       const now = new Date();
       
       sheet.appendRow([
-        newId,
-        data.title,
-        data.content,
-        data.category,
-        formatDate(now),
-        formatTime(now),
-        '', // 結束日期
-        '', // 結束時間
-        data.isUrgent || '',
-        fileUrl,
-        data.fileType,
-        '' // 狀態欄位 (預設為空)
+        newId, data.title, data.content, data.category,
+        formatDate(now), formatTime(now),
+        '', '', // 結束日期/時間
+        data.isUrgent || '', fileUrl, data.fileType,
+        '' // 狀態
       ]);
 
       writeLog(ss, data.operator || 'Admin', `新增公告: ${data.title}`);
       return { success: true, message: '發佈成功' };
 
     case 'editBulletin':
-      return updateBulletin(ss, data, false); // false 代表不是刪除
+      return updateBulletin(ss, data, false);
 
     case 'deleteBulletin':
-      return updateBulletin(ss, data, true); // true 代表是刪除模式
+      return updateBulletin(ss, data, true);
 
     default:
       return { success: false, message: 'Unknown POST action' };
   }
 }
 
-// --- 處理修改與刪除的邏輯 ---
+/**
+ * updateBulletin: 執行修改或刪除動作
+ */
 function updateBulletin(ss, data, isDelete) {
   const sheet = ss.getSheetByName('公佈欄資料');
   if (!sheet) return { success: false, message: '找不到 [公佈欄資料] 工作表' };
 
   const rows = sheet.getDataRange().getValues();
-  // 尋找對應 ID 的列索引 (Row Index)
-  // rows[i][0] 是 ID 欄位
-  const rowIndex = rows.findIndex(row => row[0].toString() === data.id.toString());
+  let rowIndex = -1;
+  // 傳統迴圈尋找指定 ID 的行
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i][0].toString() === data.id.toString()) {
+      rowIndex = i;
+      break;
+    }
+  }
 
   if (rowIndex === -1) {
     return { success: false, message: '找不到該筆資料 ID: ' + data.id };
   }
 
-  // 試算表的列號是從 1 開始，陣列是從 0 開始，所以實際列號是 rowIndex + 1
   const actualRow = rowIndex + 1;
 
   if (isDelete) {
-    // --- 刪除模式 (Soft Delete) ---
-    // 第 12 欄是「狀態」，寫入 'D'
+    // 軟刪除：將第 12 欄設為 'D'
     sheet.getRange(actualRow, 12).setValue('D');
-    
-    // 寫入 Log - 包含 ID 資訊
-    const logMessage = `刪除公告 [ID: ${data.id}] 標題: ${rows[rowIndex][1]}`;
-    writeLog(ss, data.operator || 'Admin', logMessage);
+    writeLog(ss, data.operator || 'Admin', `刪除公告 [ID: ${data.id}] 標題: ${rows[rowIndex][1]}`);
     return { success: true, message: '刪除成功' };
     
   } else {
-    // --- 修改模式 ---
+    // 記錄修改前的數據以便對比
+    const oldTitle = rows[rowIndex][1];
+    const oldContent = rows[rowIndex][2];
+    const oldCat = rows[rowIndex][3];
+    const oldUrgent = rows[rowIndex][8];
+    const oldFile = rows[rowIndex][9];
     
-    // 記錄修改前的資料
-    const oldData = {
-      title: rows[rowIndex][1],
-      content: rows[rowIndex][2],
-      category: rows[rowIndex][3],
-      isUrgent: rows[rowIndex][8],
-      fileUrl: rows[rowIndex][9]
-    };
-    
-    // 1. 如果有新圖片，先上傳並取得新連結
-    let newFileUrl = data.originalFileUrl; // 預設保留舊連結
+    // 如果有新圖片則上傳
+    let newFileUrl = data.originalFileUrl;
     if (data.fileData && data.fileName) {
        newFileUrl = saveFileToDrive(data.fileData, data.fileName, data.fileType);
     }
 
-    // 2. 更新欄位 (依序更新，不變更 ID)
-    // 欄位順序: id(1), 標題(2), 內容(3), 類別(4), 開始日期(5), 時間(6), 結日(7), 結時(8), 緊急(9), 連結(10), 類型(11)
-    
-    sheet.getRange(actualRow, 2).setValue(data.title);       // 標題
-    sheet.getRange(actualRow, 3).setValue(data.content);     // 內容
-    sheet.getRange(actualRow, 4).setValue(data.category);    // 類別
-    sheet.getRange(actualRow, 9).setValue(data.isUrgent || ''); // 緊急
-    sheet.getRange(actualRow, 10).setValue(newFileUrl);      // 檔案連結
-    sheet.getRange(actualRow, 11).setValue(data.fileType);   // 檔案類型
+    // 更新資料列
+    sheet.getRange(actualRow, 2).setValue(data.title);
+    sheet.getRange(actualRow, 3).setValue(data.content);
+    sheet.getRange(actualRow, 4).setValue(data.category);
+    sheet.getRange(actualRow, 9).setValue(data.isUrgent || '');
+    sheet.getRange(actualRow, 10).setValue(newFileUrl);
+    sheet.getRange(actualRow, 11).setValue(data.fileType);
 
-    // 建立修改記錄
+    // 建立變更記錄字串
     const changes = [];
-    if (oldData.title !== data.title) changes.push(`標題: "${oldData.title}" → "${data.title}"`);
-    if (oldData.content !== data.content) changes.push(`內容已修改`);
-    if (oldData.category !== data.category) changes.push(`類別: "${oldData.category}" → "${data.category}"`);
-    if (oldData.isUrgent !== (data.isUrgent || '')) changes.push(`緊急標記: "${oldData.isUrgent}" → "${data.isUrgent || ''}"`);
-    if (oldData.fileUrl !== newFileUrl) changes.push(`檔案已更新`);
+    if (oldTitle !== data.title) changes.push(`標題: "${oldTitle}" → "${data.title}"`);
+    if (oldContent !== data.content) changes.push(`內容已修改`);
+    if (oldCat !== data.category) changes.push(`類別: "${oldCat}" → "${data.category}"`);
+    if (oldUrgent !== (data.isUrgent || '')) changes.push(`緊急標記: "${oldUrgent}" → "${data.isUrgent || ''}"`);
+    if (oldFile !== newFileUrl) changes.push(`檔案已更新`);
     
     const changeLog = changes.length > 0 ? ` | 變更: ${changes.join('; ')}` : '';
-    const logMessage = `修改公告 [ID: ${data.id}] 標題: ${data.title}${changeLog}`;
-    
-    // 寫入 Log
-    writeLog(ss, data.operator || 'Admin', logMessage);
+    writeLog(ss, data.operator || 'Admin', `修改公告 [ID: ${data.id}] 標題: ${data.title}${changeLog}`);
     return { success: true, message: '修改成功' };
   }
 }
 
-
-// --- 輔助函式 ---
-
+/**
+ * 寫入操作日誌 (Log)
+ */
 function writeLog(ss, user, action) {
   const logSheet = ss.getSheetByName('Log');
   if (logSheet) {
@@ -324,15 +307,20 @@ function writeLog(ss, user, action) {
   }
 }
 
+/**
+ * 將檔案儲存至 Google Drive
+ */
 function saveFileToDrive(base64Data, fileName, contentType) {
   try {
     const data = base64Data.split(',')[1];
     const blob = Utilities.newBlob(Utilities.base64Decode(data), contentType, fileName);
     const folder = DriveApp.getFolderById(IMAGE_FOLDER_ID);
     const file = folder.createFile(blob);
+    // 設定共用權限為「知道連結的人皆可觀看」
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     
-    if (contentType.includes('image')) {
+    // 如果是圖片,傳回直接顯示的連結
+    if (contentType.indexOf('image') !== -1) {
       return `https://drive.google.com/uc?export=view&id=${file.getId()}`;
     } else {
       return file.getUrl();
@@ -342,19 +330,30 @@ function saveFileToDrive(base64Data, fileName, contentType) {
   }
 }
 
+/**
+ * 輔助：傳回 JSON 格式回應
+ */
 function responseJSON(data) {
   return ContentService.createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+/**
+ * 輔助：格式化日期為 yyyy/MM/dd
+ */
 function formatDate(date) {
   if (!date) return '';
   const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
   return Utilities.formatDate(d, Session.getScriptTimeZone(), "yyyy/MM/dd");
 }
 
+/**
+ * 輔助：格式化時間為 HH:mm:ss
+ */
 function formatTime(date) {
   if (!date) return '';
   const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
   return Utilities.formatDate(d, Session.getScriptTimeZone(), "HH:mm:ss");
 }

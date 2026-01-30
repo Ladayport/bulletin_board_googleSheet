@@ -6,88 +6,96 @@ import EmergencyTicker from '../components/home/EmergencyTicker';
 import Modal from '../components/ui/Modal';
 import { api } from '../services/api';
 
-// 保留 mockData 作為 fallback 
-import { mockSiteData, mockStats } from '../utils/mockData';
+// 保留 mockData 作為初始或失敗時的備案
+import { mockSiteData } from '../utils/mockData';
 
+/**
+ * 首頁組件 (Home)
+ * 負責展示最新公告、緊急跑馬燈與分類捷徑
+ */
 const Home = () => {
+  // --- 狀態定義 ---
   const [siteTitle, setSiteTitle] = useState(mockSiteData.title);
   const [bulletins, setBulletins] = useState([]);
   const [stats, setStats] = useState({
-    notice: 0,
-    activities: 0,
-    meeting: 0,
-    lostAndFound: 0,
-    others: 0,
-    qa: 0
+    notice: 0, activities: 0, meeting: 0, lostAndFound: 0, others: 0, qa: 0
   });
   const [loading, setLoading] = useState(true);
   const [selectedBulletin, setSelectedBulletin] = useState(null);
   const [emergencyMessages, setEmergencyMessages] = useState([]);
-  const [filterCategory, setFilterCategory] = useState('all'); // 新增篩選狀態
 
+  // --- 頁面初始載入 ---
   useEffect(() => {
     fetchHomeData();
   }, []);
 
+  /**
+   * 取得並處理首頁所需的全部資料
+   */
   const fetchHomeData = async () => {
     try {
       setLoading(true);
+      // 呼叫 GAS 後端 API
       const data = await api.get('getHomeData');
 
       if (data.success) {
         setSiteTitle(data.siteTitle);
         setStats(data.stats);
 
-        // 篩選緊急公告 ticker
-        const emergencies = (data.bulletins || [])
-          .filter(b => b.isUrgent === 'Y')
-          .map(b => b.title);
-        setEmergencyMessages(emergencies);
+        // 1. 處理緊急跑馬燈訊息
+        const activeMessages = [];
+        const rawBulletins = data.bulletins || [];
+        for (let i = 0; i < rawBulletins.length; i++) {
+          if (rawBulletins[i].isUrgent === 'Y') {
+            activeMessages.push(rawBulletins[i].title);
+          }
+        }
+        setEmergencyMessages(activeMessages);
 
-        // 資料正規化 (Category Normalization)
+        // 2. 準備分類對照表
         const categoryMap = {
-          '公告': '公告通知',
-          '活動': '活動通知',
-          '會議': '會議通知',
-          '失物': '失物招領',
-          '其他': '其他通知',
-          'QA': 'Q&A'
+          '公告': '公告通知', '活動': '活動通知', '會議': '會議通知',
+          '失物': '失物招領', '其他': '其他通知', 'QA': 'Q&A'
         };
 
-        const now = new Date(); // client system time
+        const now = new Date();
+        const validList = [];
 
-        const validBulletins = (data.bulletins || []).map(b => {
-          // Mapping Category
+        // 3. 處理公告清單：類別正規化與有效日期檢查
+        for (let j = 0; j < rawBulletins.length; j++) {
+          const b = rawBulletins[j];
           const normalizedCategory = categoryMap[b.category] || b.category;
 
-          // Parse Date/Time for validity check
-          // Format: YYYY/MM/DD and HH:mm:ss
+          // 解析開始與結束時間
           const startStr = `${b.startDate} ${b.startTime || '00:00:00'}`;
           const endStr = `${b.endDate} ${b.endTime || '23:59:59'}`;
           const start = new Date(startStr);
           const end = new Date(endStr);
 
-          // If date is invalid, assume valid? Or skip? Let's check validity if date string exists.
-          // GAS formatDate returns specific format.
-
-          return {
+          // 封裝處理後的資料
+          const processedItem = {
             ...b,
             category: normalizedCategory,
             isEmergency: b.isUrgent === 'Y',
-            validStart: !isNaN(start) ? start : null,
-            validEnd: !isNaN(end) ? end : null
+            validStart: !isNaN(start.getTime()) ? start : null,
+            validEnd: !isNaN(end.getTime()) ? end : null
           };
-        }).filter(b => {
-          // Filter Logic:
-          // Start Date/Time <= Now
-          // End Date/Time >= Now (if endDate exists)
-          if (!b.validStart) return true;
-          if (b.validStart > now) return false; // Future
-          if (b.validEnd && b.validEnd < now) return false; // Expired
-          return true;
-        });
 
-        setBulletins(validBulletins);
+          // 過濾條件：公告必須在有效期間內 (開始時間 <= 現在, 且未結束)
+          let isValid = true;
+          if (processedItem.validStart && processedItem.validStart > now) {
+            isValid = false; // 尚未開始
+          }
+          if (processedItem.validEnd && processedItem.validEnd < now) {
+            isValid = false; // 已經過期
+          }
+
+          if (isValid) {
+            validList.push(processedItem);
+          }
+        }
+
+        setBulletins(validList);
 
       } else {
         console.error('API Error:', data.message);
@@ -99,35 +107,46 @@ const Home = () => {
     }
   };
 
+  // 修改網頁分頁標題
   useEffect(() => {
     document.title = siteTitle;
   }, [siteTitle]);
 
-  // 排序與顯示邏輯 (Max 15)
-  // 1. Emergency (Y) Top
-  // 2. Start Date + Time (Newest First)
-  const sortedBulletins = [...bulletins].sort((a, b) => {
+  // --- 排序邏輯 ---
+  // 使用傳統方式處理排序，規則：1.緊急置頂 2.日期由新到舊
+  const sortedList = [...bulletins];
+  sortedList.sort((a, b) => {
+    // 緊急公告優先權最高
     if (a.isEmergency && !b.isEmergency) return -1;
     if (!a.isEmergency && b.isEmergency) return 1;
-    // Both same emergency status, sort by date desc
-    const dateA = a.validStart || new Date(0);
-    const dateB = b.validStart || new Date(0);
-    return dateB - dateA;
-  }).slice(0, 15); // Max 15 items in Home
 
+    // 若權等相同，則比對日期 (時間戳)
+    const timeA = a.validStart ? a.validStart.getTime() : 0;
+    const timeB = b.validStart ? b.validStart.getTime() : 0;
+    return timeB - timeA; // 由新到舊
+  });
+
+  // 首頁僅展示前 15 筆
+  const displayList = [];
+  for (let k = 0; k < sortedList.length && k < 15; k++) {
+    displayList.push(sortedList[k]);
+  }
 
   return (
     <div className="fade-in">
       <Header title={siteTitle} />
 
       <main className="container">
+        {/* 緊急公告跑馬燈 */}
         {emergencyMessages.length > 0 && <EmergencyTicker messages={emergencyMessages} />}
 
+        {/* 快速服務分類區 */}
         <section style={{ marginBottom: '24px' }}>
           <h2 style={{ marginBottom: '16px', color: 'var(--text-muted)' }}>快速服務</h2>
           <FeatureGrid stats={stats} />
         </section>
 
+        {/* 最新公告列表區 */}
         <section id="bulletin-section">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h2 style={{ color: 'var(--text-muted)', margin: 0 }}>最新公告</h2>
@@ -138,13 +157,14 @@ const Home = () => {
             <div style={{ padding: '40px', textAlign: 'center', color: '#999' }}>載入資料中...</div>
           ) : (
             <BulletinSection
-              bulletins={sortedBulletins}
+              bulletins={displayList}
               onBulletinClick={(item) => setSelectedBulletin(item)}
             />
           )}
         </section>
       </main>
 
+      {/* 公告詳細資訊彈窗 */}
       <Modal
         isOpen={!!selectedBulletin}
         onClose={() => setSelectedBulletin(null)}
@@ -157,13 +177,13 @@ const Home = () => {
             </h2>
             <div style={{ color: 'var(--text-muted)', marginBottom: '24px', fontSize: '0.9rem', display: 'flex', justifyContent: 'space-between' }}>
               <span>分類：{selectedBulletin.category}</span>
-              <span>發佈日期：{selectedBulletin.date}</span>
+              <span>發佈日期：{selectedBulletin.startDate}</span>
             </div>
             <div style={{ lineHeight: '1.8', whiteSpace: 'pre-line', marginBottom: '24px' }}>
               {selectedBulletin.content}
             </div>
 
-            {/* Improved Image Handling */}
+            {/* 附件處理 */}
             {selectedBulletin.fileUrl && (
               <div style={{ marginTop: '20px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
                 <h4 style={{ fontSize: '1rem', marginBottom: '8px' }}>附件</h4>
@@ -182,8 +202,8 @@ const Home = () => {
             )}
           </div>
         )}
-      </Modal >
-    </div >
+      </Modal>
+    </div>
   );
 };
 
