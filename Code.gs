@@ -41,7 +41,11 @@ function handleGetAction(action, params) {
         
         // 過濾掉狀態為 'D' (刪除) 的資料
         // 對應欄位索引: id(0)... 狀態(11)
-        const activeRows = rows.filter(row => (row[11] || '') !== 'D');
+        // 如果狀態欄位不存在（row.length < 12），視為未刪除
+        const activeRows = rows.filter(row => {
+          if (row.length < 12) return true; // 沒有狀態欄位，視為有效資料
+          return (row[11] || '') !== 'D';
+        });
 
         // 對應欄位: id(0), 標題(1), 內容(2), 類別(3), 開始日期(4), 開始時間(5), 結束日期(6), 結束時間(7), 緊急公告標記(8), 檔案連結(9), 檔案類型(10)
         bulletins = activeRows.map(row => ({
@@ -92,27 +96,56 @@ function handleGetAction(action, params) {
       const filterRows = filterDataSheet.getDataRange().getValues();
       filterRows.shift(); // 移除標題列
 
+      // Debug: 記錄查詢條件
+      Logger.log('查詢條件 - 類別: ' + category + ', 開始: ' + startDate + ', 結束: ' + endDate);
+      Logger.log('總資料筆數: ' + filterRows.length);
+
       // 過濾條件：
       // 1. 狀態不是 'D' (未刪除)
       // 2. 類別符合
       // 3. 開始日期在範圍內
       const filtered = filterRows.filter(row => {
         // 狀態檢查 (欄位 11)
-        if ((row[11] || '') === 'D') return false;
+        if (row.length >= 12 && (row[11] || '') === 'D') {
+          Logger.log('過濾: 狀態為 D - ID: ' + row[0]);
+          return false;
+        }
         
         // 類別檢查 (欄位 3)
-        if (row[3] !== category) return false;
+        if (row[3] !== category) {
+          Logger.log('過濾: 類別不符 - ID: ' + row[0] + ', 類別: ' + row[3] + ' vs ' + category);
+          return false;
+        }
         
         // 日期檢查 (欄位 4: 開始日期)
-        const bulletinDate = formatDate(row[4]); // 轉換為 YYYY/MM/DD
-        const bulletinDateObj = new Date(bulletinDate.replace(/\//g, '-')); // 轉為 Date 物件
-        const filterStart = new Date(startDate);
-        const filterEnd = new Date(endDate);
+        try {
+          const bulletinDate = formatDate(row[4]); // 轉換為 YYYY/MM/DD
+          Logger.log('公告日期: ' + bulletinDate + ' (原始: ' + row[4] + ')');
+          
+          // 將 YYYY/MM/DD 轉為 Date 物件
+          const dateParts = bulletinDate.split('/');
+          const bulletinDateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+          
+          // 將 YYYY-MM-DD 轉為 Date 物件
+          const filterStart = new Date(startDate);
+          const filterEnd = new Date(endDate);
+          
+          Logger.log('比較: ' + bulletinDateObj.toISOString() + ' vs ' + filterStart.toISOString() + ' ~ ' + filterEnd.toISOString());
+          
+          if (bulletinDateObj < filterStart || bulletinDateObj > filterEnd) {
+            Logger.log('過濾: 日期不在範圍 - ID: ' + row[0]);
+            return false;
+          }
+        } catch (e) {
+          Logger.log('日期解析錯誤: ' + e.toString());
+          return false;
+        }
         
-        if (bulletinDateObj < filterStart || bulletinDateObj > filterEnd) return false;
-        
+        Logger.log('通過: ID: ' + row[0]);
         return true;
       });
+
+      Logger.log('過濾後筆數: ' + filtered.length);
 
       const filteredBulletins = filtered.map(row => ({
         id: row[0],
@@ -225,12 +258,22 @@ function updateBulletin(ss, data, isDelete) {
     // 第 12 欄是「狀態」，寫入 'D'
     sheet.getRange(actualRow, 12).setValue('D');
     
-    // 寫入 Log
-    writeLog(ss, data.operator || 'Admin', `刪除公告 ID: ${data.id}`);
+    // 寫入 Log - 包含 ID 資訊
+    const logMessage = `刪除公告 [ID: ${data.id}] 標題: ${rows[rowIndex][1]}`;
+    writeLog(ss, data.operator || 'Admin', logMessage);
     return { success: true, message: '刪除成功' };
     
   } else {
     // --- 修改模式 ---
+    
+    // 記錄修改前的資料
+    const oldData = {
+      title: rows[rowIndex][1],
+      content: rows[rowIndex][2],
+      category: rows[rowIndex][3],
+      isUrgent: rows[rowIndex][8],
+      fileUrl: rows[rowIndex][9]
+    };
     
     // 1. 如果有新圖片，先上傳並取得新連結
     let newFileUrl = data.originalFileUrl; // 預設保留舊連結
@@ -248,8 +291,19 @@ function updateBulletin(ss, data, isDelete) {
     sheet.getRange(actualRow, 10).setValue(newFileUrl);      // 檔案連結
     sheet.getRange(actualRow, 11).setValue(data.fileType);   // 檔案類型
 
+    // 建立修改記錄
+    const changes = [];
+    if (oldData.title !== data.title) changes.push(`標題: "${oldData.title}" → "${data.title}"`);
+    if (oldData.content !== data.content) changes.push(`內容已修改`);
+    if (oldData.category !== data.category) changes.push(`類別: "${oldData.category}" → "${data.category}"`);
+    if (oldData.isUrgent !== (data.isUrgent || '')) changes.push(`緊急標記: "${oldData.isUrgent}" → "${data.isUrgent || ''}"`);
+    if (oldData.fileUrl !== newFileUrl) changes.push(`檔案已更新`);
+    
+    const changeLog = changes.length > 0 ? ` | 變更: ${changes.join('; ')}` : '';
+    const logMessage = `修改公告 [ID: ${data.id}] 標題: ${data.title}${changeLog}`;
+    
     // 寫入 Log
-    writeLog(ss, data.operator || 'Admin', `修改公告: ${data.title}`);
+    writeLog(ss, data.operator || 'Admin', logMessage);
     return { success: true, message: '修改成功' };
   }
 }

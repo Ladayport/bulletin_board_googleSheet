@@ -7,12 +7,12 @@ const ManageBulletins = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [categories] = useState([
-        { code: '公告', name: '公告通知' },
-        { code: '活動', name: '活動通知' },
-        { code: '會議', name: '會議通知' },
-        { code: '失物', name: '失物招領' },
-        { code: '其他', name: '其他通知' },
-        { code: 'QA', name: 'Q&A' }
+        { code: '公告', name: '公告' },
+        { code: '活動', name: '活動' },
+        { code: '會議', name: '會議' },
+        { code: '失物', name: '失物' },
+        { code: '其他', name: '其他' },
+        { code: 'QA', name: 'QA' }
     ]);
 
     const [filters, setFilters] = useState({
