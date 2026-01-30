@@ -72,7 +72,32 @@ const CategoryPage = () => {
      */
     const fetchData = async () => {
         try {
-            setLoading(true);
+            // --- 效能優化：快取優先策略 ---
+            // 優先嘗試從本機快取 (localStorage) 讀取資料
+            const cachedString = localStorage.getItem('bulletin_cache_all');
+            let hasCache = false;
+
+            if (cachedString) {
+                try {
+                    const cache = JSON.parse(cachedString);
+                    // 若快取內有資料，先行渲染，達到「秒開」效果
+                    if (cache.data && cache.data.length > 0) {
+                        setBulletins(cache.data);
+                        setLoading(false); // 停止顯示全螢幕讀取
+                        hasCache = true;
+                        console.log('[Performance] 已從本機快取預載資料。');
+                    }
+                } catch (parseErr) {
+                    console.error('快取解析失敗:', parseErr);
+                }
+            }
+
+            // 若沒有快取，則需要顯示讀取中動畫
+            if (!hasCache) {
+                setLoading(true);
+            }
+
+            // 向後端取得最新資料 (背景同步)
             const data = await api.get('getHomeData');
 
             if (data.success && data.bulletins) {
@@ -131,6 +156,15 @@ const CategoryPage = () => {
                     }
                 }
 
+                // 第三階段：對篩選後的資料進行排序 (依據日期與時間由新到舊)
+                // 在存入狀態前先排好序，避免在渲染期間排序造成畫面閃爍
+                filteredList.sort((a, b) => {
+                    const timeA = a.validStart.getTime();
+                    const timeB = b.validStart.getTime();
+                    // 直接比對完整的日期與時間 (由新到舊)
+                    return timeB - timeA;
+                });
+
                 setBulletins(filteredList);
             }
         } catch (e) {
@@ -140,17 +174,15 @@ const CategoryPage = () => {
         }
     };
 
-    // --- 顯示過濾與排序 ---
-    // 依據目前選中的 Tab 篩選出要顯示的內容,並按日期降序排列
+    // --- 顯示過濾 ---
+    // 依據目前選中的 Tab 篩選出要顯示的內容 (陣列已在 fetchData 中排好序)
     const displayBulletins = [];
     for (let k = 0; k < bulletins.length; k++) {
-        if (bulletins[k].category === activeTab) {
-            displayBulletins.push(bulletins[k]);
+        const item = bulletins[k];
+        if (item.category === activeTab) {
+            displayBulletins.push(item);
         }
     }
-
-    // 排序：由新到舊
-    displayBulletins.sort((a, b) => b.validStart - a.validStart);
 
     return (
         <div className="fade-in">

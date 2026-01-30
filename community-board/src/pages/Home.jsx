@@ -95,7 +95,30 @@ const Home = () => {
           }
         }
 
+        // 第三階段：對資料進行穩定排序 (緊急置頂 -> 日期降序 -> ID 降序)
+        // 在存入狀態前先排好序，避免在渲染期間排序造成畫面跳動
+        validList.sort((a, b) => {
+          // 1. 緊急公告優先權最高
+          if (a.isEmergency && !b.isEmergency) return -1;
+          if (!a.isEmergency && b.isEmergency) return 1;
+
+          // 2. 由於資料來源包含日期與時間欄位，直接比對完整時間 (由新到舊)
+          const timeA = a.validStart ? a.validStart.getTime() : 0;
+          const timeB = b.validStart ? b.validStart.getTime() : 0;
+          return timeB - timeA;
+        });
+
+
         setBulletins(validList);
+
+        // --- 效能優化：資料預載 (Pre-loading) ---
+        // 雖然首頁強制抓取最新資料，但我們可以將結果存入快取
+        // 讓使用者切換到「分類頁」時能享有「秒開」的體驗
+        const cacheData = {
+          updateTime: new Date().getTime(),
+          data: validList
+        };
+        localStorage.setItem('bulletin_cache_all', JSON.stringify(cacheData));
 
       } else {
         console.error('API Error:', data.message);
@@ -112,24 +135,10 @@ const Home = () => {
     document.title = siteTitle;
   }, [siteTitle]);
 
-  // --- 排序邏輯 ---
-  // 使用傳統方式處理排序，規則：1.緊急置頂 2.日期由新到舊
-  const sortedList = [...bulletins];
-  sortedList.sort((a, b) => {
-    // 緊急公告優先權最高
-    if (a.isEmergency && !b.isEmergency) return -1;
-    if (!a.isEmergency && b.isEmergency) return 1;
-
-    // 若權等相同，則比對日期 (時間戳)
-    const timeA = a.validStart ? a.validStart.getTime() : 0;
-    const timeB = b.validStart ? b.validStart.getTime() : 0;
-    return timeB - timeA; // 由新到舊
-  });
-
-  // 首頁僅展示前 15 筆
+  // 首頁僅展示前 15 筆 (清單已在 fetchHomeData 中排好序)
   const displayList = [];
-  for (let k = 0; k < sortedList.length && k < 15; k++) {
-    displayList.push(sortedList[k]);
+  for (let k = 0; k < bulletins.length && k < 15; k++) {
+    displayList.push(bulletins[k]);
   }
 
   return (
