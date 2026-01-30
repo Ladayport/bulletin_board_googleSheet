@@ -95,18 +95,19 @@ const Home = () => {
           }
         }
 
-        // 第三階段：對資料進行穩定排序 (緊急置頂 -> 日期降序 -> ID 降序)
-        // 在存入狀態前先排好序，避免在渲染期間排序造成畫面跳動
+        // 第三階段：對資料進行排序 (緊急置頂 -> 依據完整日期與時間降序)
+        // 首頁維持原邏輯：緊急公告優先顯示，其餘按時序排列
         validList.sort((a, b) => {
           // 1. 緊急公告優先權最高
           if (a.isEmergency && !b.isEmergency) return -1;
           if (!a.isEmergency && b.isEmergency) return 1;
 
-          // 2. 由於資料來源包含日期與時間欄位，直接比對完整時間 (由新到舊)
+          // 2. 依據完整日期與時間由新到舊排序
           const timeA = a.validStart ? a.validStart.getTime() : 0;
           const timeB = b.validStart ? b.validStart.getTime() : 0;
           return timeB - timeA;
         });
+
 
 
         setBulletins(validList);
