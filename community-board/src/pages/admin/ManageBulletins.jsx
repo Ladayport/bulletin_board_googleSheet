@@ -183,13 +183,15 @@ const ManageBulletins = () => {
                                     key={bulletin.id}
                                     style={{
                                         padding: '16px',
-                                        backgroundColor: '#fff',
+                                        backgroundColor: bulletin.status === 'D' ? '#f3f4f6' : '#fff',
                                         border: '1px solid #e5e7eb',
                                         borderRadius: '8px',
                                         display: 'grid',
-                                        gridTemplateColumns: '100px 1fr 120px 120px 200px',
+                                        gridTemplateColumns: '100px 1fr 120px 120px 120px 200px',
                                         gap: '16px',
-                                        alignItems: 'center'
+                                        alignItems: 'center',
+                                        opacity: bulletin.status === 'D' ? 0.65 : 1,
+                                        transition: 'all 0.2s ease'
                                     }}
                                 >
                                     <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
@@ -197,7 +199,7 @@ const ManageBulletins = () => {
                                     </div>
 
                                     <div>
-                                        <div style={{ fontWeight: '500', marginBottom: '4px' }}>
+                                        <div style={{ fontWeight: '500', marginBottom: '4px', textDecoration: bulletin.status === 'D' ? 'line-through' : 'none' }}>
                                             {bulletin.title}
                                         </div>
                                         <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
@@ -224,6 +226,34 @@ const ManageBulletins = () => {
                                         )}
                                     </div>
 
+                                    <div>
+                                        {bulletin.status === 'D' ? (
+                                            <span style={{
+                                                padding: '4px 8px',
+                                                backgroundColor: '#fee2e2',
+                                                color: '#dc2626',
+                                                borderRadius: '4px',
+                                                fontSize: '0.75rem',
+                                                fontWeight: '500',
+                                                border: '1px solid #fecaca'
+                                            }}>
+                                                已刪除
+                                            </span>
+                                        ) : (
+                                            <span style={{
+                                                padding: '4px 8px',
+                                                backgroundColor: '#f0fdf4',
+                                                color: '#16a34a',
+                                                borderRadius: '4px',
+                                                fontSize: '0.75rem',
+                                                fontWeight: '500',
+                                                border: '1px solid #bbf7d0'
+                                            }}>
+                                                正常顯示
+                                            </span>
+                                        )}
+                                    </div>
+
                                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                                         <button
                                             onClick={() => handleEdit(bulletin.id)}
@@ -238,13 +268,14 @@ const ManageBulletins = () => {
                                             style={{
                                                 padding: '6px 12px',
                                                 fontSize: '0.85rem',
-                                                backgroundColor: '#fee2e2',
-                                                color: '#dc2626',
-                                                border: '1px solid #fecaca'
+                                                backgroundColor: bulletin.status === 'D' ? '#e5e7eb' : '#fee2e2',
+                                                color: bulletin.status === 'D' ? '#9ca3af' : '#dc2626',
+                                                border: '1px solid ' + (bulletin.status === 'D' ? '#d1d5db' : '#fecaca'),
+                                                cursor: bulletin.status === 'D' ? 'not-allowed' : 'pointer'
                                             }}
-                                            disabled={loading}
+                                            disabled={loading || bulletin.status === 'D'}
                                         >
-                                            刪除
+                                            {bulletin.status === 'D' ? '已收回' : '刪除'}
                                         </button>
                                     </div>
                                 </div>
