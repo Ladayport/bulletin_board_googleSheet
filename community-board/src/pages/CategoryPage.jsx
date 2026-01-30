@@ -158,12 +158,12 @@ const CategoryPage = () => {
                         </div>
                         {selectedBulletin.fileUrl && (
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">附件</label>
                                 <a
                                     href={selectedBulletin.fileUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                    className="btn btn-primary"
+                                    style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
                                 >
                                     開啟附件
                                 </a>

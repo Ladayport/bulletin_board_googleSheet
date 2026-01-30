@@ -160,29 +160,23 @@ const Home = () => {
             {selectedBulletin.fileUrl && (
               <div style={{ marginTop: '20px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
                 <h4 style={{ fontSize: '1rem', marginBottom: '8px' }}>附件</h4>
-
-                {(() => {
-                  const isImage = (
-                    (selectedBulletin.fileType && selectedBulletin.fileType.startsWith('image/')) ||
-                    (!selectedBulletin.fileType && selectedBulletin.fileUrl.match(/\.(jpeg|jpg|gif|png)$/i)) ||
-                    (!selectedBulletin.fileType && selectedBulletin.fileUrl.includes('drive.google.com') && !selectedBulletin.fileUrl.toLowerCase().endsWith('.pdf'))
-                  );
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">附件</label>
-                    <a
-                      href={selectedBulletin.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                      開啟附件
-                    </a>
-                  </div>
-            )}
+                <div className="mb-4">
+                  <a
+                    href={selectedBulletin.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-primary"
+                    style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
+                  >
+                    開啟附件
+                  </a>
+                </div>
               </div>
             )}
-          </Modal>
-    </div>
+          </div>
+        )}
+      </Modal >
+    </div >
   );
 };
 
