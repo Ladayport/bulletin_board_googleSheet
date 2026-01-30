@@ -1,15 +1,11 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { authService } from '../../services/auth';
-import AutoLogout from '../auth/AutoLogout';
 
 const PrivateRoute = () => {
-    const isAuth = authService.isAuthenticated();
-    return isAuth ? (
-        <>
-            <AutoLogout />
-            <Outlet />
-        </>
-    ) : <Navigate to="/login" replace />;
+    // Check if user is authenticated (token exists)
+    const isAuthenticated = authService.isAuthenticated();
+
+    return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 export default PrivateRoute;

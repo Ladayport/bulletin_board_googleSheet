@@ -156,30 +156,39 @@ const Home = () => {
             </div>
 
             {/* Improved Image Handling */}
-            {(selectedBulletin.fileType && selectedBulletin.fileType.startsWith('image/')) || (selectedBulletin.fileUrl && selectedBulletin.fileUrl.includes('drive.google.com')) ? (
-              <div style={{ cursor: 'pointer' }} onClick={() => window.open(selectedBulletin.fileUrl, '_blank')}>
-                <img
-                  src={selectedBulletin.fileUrl}
-                  alt="附件縮圖"
-                  style={{ maxWidth: '100%', borderRadius: '4px', border: '1px solid #eee' }}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.style.display = 'none';
-                    e.target.parentNode.innerHTML += '<a href="' + selectedBulletin.fileUrl + '" target="_blank" class="btn btn-primary">開啟圖片</a>';
-                  }}
-                />
-                <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#666', marginTop: '4px' }}>(點擊查看大圖)</p>
+            {selectedBulletin.fileUrl && (
+              <div style={{ marginTop: '20px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
+                <h4 style={{ fontSize: '1rem', marginBottom: '8px' }}>附件</h4>
+
+                {/* 判定是否為圖片 (透過 fileType 或 副檔名檢查) */}
+                {(selectedBulletin.fileType && selectedBulletin.fileType.startsWith('image/')) ? (
+                  <div style={{ cursor: 'pointer' }} onClick={() => window.open(selectedBulletin.fileUrl, '_blank')}>
+                    <img
+                      src={selectedBulletin.fileUrl}
+                      alt="附件縮圖"
+                      style={{ maxWidth: '100%', borderRadius: '4px', border: '1px solid #eee' }}
+                      onError={(e) => {
+                        // 圖片載入失敗時 (例如非公開連結)，顯示按鈕作為備案
+                        e.target.onerror = null;
+                        e.target.style.display = 'none';
+                        e.target.parentNode.innerHTML = '<a href="' + selectedBulletin.fileUrl + '" target="_blank" class="btn btn-primary">開啟圖片附件</a>';
+                      }}
+                    />
+                    <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#666', marginTop: '4px' }}>(點擊查看大圖)</p>
+                  </div>
+                ) : (
+                  // 非圖片檔案 (PDF, Doc, etc) -> 顯示按鈕
+                  <a
+                    href={selectedBulletin.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-primary"
+                    style={{ display: 'inline-flex', textDecoration: 'none' }}
+                  >
+                    開啟附件
+                  </a>
+                )}
               </div>
-            ) : (
-              <a
-                href={selectedBulletin.fileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-primary"
-                style={{ display: 'inline-flex', textDecoration: 'none' }}
-              >
-                開啟附件
-              </a>
             )}
           </div>
         )}

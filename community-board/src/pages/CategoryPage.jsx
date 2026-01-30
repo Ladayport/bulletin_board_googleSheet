@@ -159,7 +159,7 @@ const CategoryPage = () => {
                             <div style={{ marginTop: '20px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
                                 <h4 style={{ fontSize: '1rem', marginBottom: '8px' }}>附件</h4>
                                 {/* Improved Image Handling */}
-                                {(selectedBulletin.fileType && selectedBulletin.fileType.startsWith('image/')) || selectedBulletin.fileUrl.includes('drive.google.com') ? (
+                                {(selectedBulletin.fileType && selectedBulletin.fileType.startsWith('image/')) ? (
                                     <div style={{ cursor: 'pointer' }} onClick={() => window.open(selectedBulletin.fileUrl, '_blank')}>
                                         <img
                                             src={selectedBulletin.fileUrl}
@@ -168,7 +168,7 @@ const CategoryPage = () => {
                                             onError={(e) => {
                                                 e.target.onerror = null;
                                                 e.target.style.display = 'none';
-                                                e.target.parentNode.innerHTML += '<a href="' + selectedBulletin.fileUrl + '" target="_blank" class="btn btn-primary">開啟圖片</a>';
+                                                e.target.parentNode.innerHTML = '<a href="' + selectedBulletin.fileUrl + '" target="_blank" class="btn btn-primary">開啟圖片附件</a>';
                                             }}
                                         />
                                         <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#666', marginTop: '4px' }}>(點擊查看大圖)</p>
