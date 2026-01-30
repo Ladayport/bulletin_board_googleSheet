@@ -189,31 +189,16 @@ const ManageBulletins = () => {
                                         border: '1px solid #e5e7eb',
                                         borderRadius: '8px',
                                         display: 'grid',
-                                        gridTemplateColumns: 'min-content 1fr 160px',
-                                        gap: '12px',
+                                        gridTemplateColumns: '100px 1fr 160px',
+                                        gap: '16px',
                                         alignItems: 'center',
                                         opacity: bulletin.status === 'D' ? 0.65 : 1,
                                         transition: 'all 0.2s ease',
                                         overflow: 'hidden'
                                     }}
                                 >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-                                        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: '500' }}>
-                                            {bulletin.startDate}
-                                        </div>
-                                        {bulletin.isUrgent === 'Y' && (
-                                            <span style={{
-                                                padding: '2px 6px',
-                                                backgroundColor: '#fef2f2',
-                                                color: '#dc2626',
-                                                borderRadius: '4px',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 'bold',
-                                                border: '1px solid #fee2e2'
-                                            }}>
-                                                急
-                                            </span>
-                                        )}
+                                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+                                        {bulletin.startDate}
                                     </div>
 
                                     <div style={{ overflow: 'hidden' }}>
@@ -227,8 +212,23 @@ const ManageBulletins = () => {
                                         }}>
                                             {bulletin.title}
                                         </div>
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                                            {bulletin.category}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                                {bulletin.category}
+                                            </div>
+                                            {bulletin.isUrgent === 'Y' && (
+                                                <span style={{
+                                                    padding: '1px 5px',
+                                                    backgroundColor: '#fef2f2',
+                                                    color: '#dc2626',
+                                                    borderRadius: '4px',
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: 'bold',
+                                                    border: '1px solid #fee2e2'
+                                                }}>
+                                                    急
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
 
