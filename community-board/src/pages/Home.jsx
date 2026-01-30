@@ -12,7 +12,14 @@ import { mockSiteData, mockStats } from '../utils/mockData';
 const Home = () => {
   const [siteTitle, setSiteTitle] = useState(mockSiteData.title);
   const [bulletins, setBulletins] = useState([]);
-  const [stats, setStats] = useState(mockStats);
+  const [stats, setStats] = useState({
+    notice: 0,
+    activities: 0,
+    meeting: 0,
+    lostAndFound: 0,
+    others: 0,
+    qa: 0
+  });
   const [loading, setLoading] = useState(true);
   const [selectedBulletin, setSelectedBulletin] = useState(null);
   const [emergencyMessages, setEmergencyMessages] = useState([]);
