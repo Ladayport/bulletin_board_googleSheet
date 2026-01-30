@@ -15,6 +15,23 @@ const CategoryPage = () => {
     const [bulletins, setBulletins] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // 日期篩選狀態
+    const getDefaultDates = () => {
+        const today = new Date();
+        const twentyDaysAgo = new Date();
+        twentyDaysAgo.setDate(today.getDate() - 20);
+        const sixtyDaysLater = new Date();
+        sixtyDaysLater.setDate(today.getDate() + 60);
+
+        return {
+            startDate: twentyDaysAgo.toISOString().split('T')[0],
+            endDate: sixtyDaysLater.toISOString().split('T')[0]
+        };
+    };
+
+    const [dateFilter, setDateFilter] = useState(getDefaultDates());
+    const [displayedCount, setDisplayedCount] = useState(0);
+
     const tabs = [
         { id: 'notice', label: '公告通知' },
         { id: 'activities', label: '活動通知' },
@@ -66,7 +83,29 @@ const CategoryPage = () => {
                         validStart: !isNaN(start) ? start : new Date(0)
                     };
                 });
-                setBulletins(processed);
+                const filtered = processed.filter(b => {
+                    // 1. 日期範圍篩選
+                    const bulletinDateStr = b.startDate; // YYYY/MM/DD
+                    if (bulletinDateStr) {
+                        const bulletinDate = new Date(bulletinDateStr.replace(/\//g, '-'));
+                        const filterStart = new Date(dateFilter.startDate);
+                        const filterEnd = new Date(dateFilter.endDate);
+                        filterEnd.setHours(23, 59, 59, 999);
+
+                        if (bulletinDate < filterStart || bulletinDate > filterEnd) {
+                            return false;
+                        }
+                    }
+
+                    // 2. 有效性檢查
+                    if (!b.validStart) return true;
+                    const now = new Date();
+                    if (b.validStart > now) return false;
+                    return true;
+                });
+
+                setBulletins(filtered);
+                setDisplayedCount(filtered.length);
             }
         } catch (e) {
             console.error(e);
@@ -120,6 +159,56 @@ const CategoryPage = () => {
                         ))}
                     </div>
                 </div>
+
+                {/* 日期篩選區塊 */}
+                <section style={{
+                    marginBottom: '24px',
+                    padding: '16px',
+                    backgroundColor: 'var(--bg-card)',
+                    borderRadius: '8px',
+                    border: '1px solid #e5e7eb'
+                }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <label style={{ fontSize: '0.9rem', fontWeight: '500' }}>日期範圍：</label>
+                        <input
+                            type="date"
+                            value={dateFilter.startDate}
+                            onChange={e => setDateFilter({ ...dateFilter, startDate: e.target.value })}
+                            style={{
+                                padding: '8px 12px',
+                                borderRadius: '6px',
+                                border: '1px solid #ddd',
+                                fontSize: '0.9rem'
+                            }}
+                        />
+                        <span style={{ color: 'var(--text-muted)' }}>~</span>
+                        <input
+                            type="date"
+                            value={dateFilter.endDate}
+                            onChange={e => setDateFilter({ ...dateFilter, endDate: e.target.value })}
+                            style={{
+                                padding: '8px 12px',
+                                borderRadius: '6px',
+                                border: '1px solid #ddd',
+                                fontSize: '0.9rem'
+                            }}
+                        />
+                        <button
+                            onClick={() => fetchData()}
+                            className="btn btn-primary"
+                            style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+                        >
+                            查詢
+                        </button>
+                        <span style={{
+                            marginLeft: 'auto',
+                            fontSize: '0.9rem',
+                            color: 'var(--text-muted)'
+                        }}>
+                            {activeTab} 共 {displayBulletins.length} 筆
+                        </span>
+                    </div>
+                </section>
 
                 <h2 style={{ marginBottom: '24px', color: 'var(--text-main)' }}>{activeTab}</h2>
 

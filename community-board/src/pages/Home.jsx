@@ -74,7 +74,7 @@ const Home = () => {
           // Filter Logic:
           // Start Date/Time <= Now
           // End Date/Time >= Now (if endDate exists)
-          if (!b.validStart) return true; // checking... assume valid if no date set? usually bulletins have date.
+          if (!b.validStart) return true;
           if (b.validStart > now) return false; // Future
           if (b.validEnd && b.validEnd < now) return false; // Expired
           return true;
