@@ -217,9 +217,10 @@ function handlePostAction(action, data) {
     case 'addBulletin':
       // 校驗必填欄位
       if (!data.startDate || !data.endDate) {
-        return responseJSON({ success: false, message: '開始日期與結束日期為必填項' });
+        return { success: false, message: '開始日期與結束日期為必填項' };
       }
 
+      const newId = new Date().getTime().toString();
       const sheet = ss.getSheetByName('公佈欄資料');
       if (!sheet) return { success: false, message: '找不到 [公佈欄資料] 工作表' };
 

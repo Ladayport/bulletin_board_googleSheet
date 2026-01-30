@@ -220,9 +220,10 @@ const EditBulletin = () => {
                         >
                             <option value="公告通知">公告通知</option>
                             <option value="活動通知">活動通知</option>
-                            <option value="會議通知">會議通知</option>
+                            <option value="會議紀錄">會議紀錄</option>
                             <option value="失物招領">失物招領</option>
-                            <option value="其他通知">其他通知</option>
+                            <option value="其他項目">其他項目</option>
+                            <option value="Q&A">Q&A</option>
                         </select>
                     </div>
                 </div>
