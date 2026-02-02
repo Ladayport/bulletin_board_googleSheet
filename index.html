@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Community Bulletin Board</title>
+
+  <script>
+    (function () {
+      // 只在開發模式或本機環境執行
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        const originalInfo = console.info;
+        console.info = function (...args) {
+          // 攔截 React DevTools 提示
+          if (args.length > 0 && typeof args[0] === 'string' && args[0].includes('Download the React DevTools')) {
+            return;
+          }
+          originalInfo.apply(console, args);
+        };
+      }
+    })();
+  </script>
+  <script type="module" crossorigin src="/bulletin_board_googlesheet/assets/index-CdMjI2CY.js"></script>
+  <link rel="stylesheet" crossorigin href="/bulletin_board_googlesheet/assets/index-BlBHSJO3.css">
+</head>
+
+<body>
+  <div id="root"></div>
+</body>
+
+</html>
