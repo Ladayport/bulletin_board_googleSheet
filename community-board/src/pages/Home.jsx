@@ -61,7 +61,7 @@ const Home = () => {
           '會議': '會議',
           '失物': '失物',
           '其他': '其他',
-          'QA': 'Q&A', 'Q&A': 'Q&A', '問答': 'Q&A'
+          'QA': 'QA', 'Q&A': 'QA', '問答': 'QA'
         };
 
         const now = new Date();
@@ -133,7 +133,7 @@ const Home = () => {
           else if (item.category === '會議') newStats.meeting++;
           else if (item.category === '失物') newStats.lostAndFound++;
           else if (item.category === '其他') newStats.others++;
-          else if (item.category === 'Q&A') newStats.qa++;
+          else if (item.category === 'QA') newStats.qa++;
         }
         setStats(newStats);
 
