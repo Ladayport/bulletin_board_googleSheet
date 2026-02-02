@@ -40,12 +40,12 @@ const CategoryPage = () => {
 
     // 定義所有可選的分類標籤
     const tabs = [
-        { id: 'notice', label: '公告通知' },
-        { id: 'activities', label: '活動通知' },
-        { id: 'meeting', label: '會議通知' },
-        { id: 'lost-found', label: '失物招領' },
-        { id: 'others', label: '其他通知' },
-        { id: 'qa', label: 'Q&A' }
+        { id: 'notice', label: '公告' },
+        { id: 'activities', label: '活動' },
+        { id: 'meeting', label: '會議' },
+        { id: 'lost-found', label: '失物' },
+        { id: 'others', label: '其他' },
+        { id: 'qa', label: 'QA' }
     ];
 
     /**
