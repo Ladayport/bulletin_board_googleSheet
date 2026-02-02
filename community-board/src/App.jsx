@@ -10,7 +10,6 @@ import AddAnnouncement from './pages/admin/AddAnnouncement';
 import ManageBulletins from './pages/admin/ManageBulletins';
 import EditBulletin from './pages/admin/EditBulletin';
 import PrivateRoute from './components/layout/PrivateRoute';
-
 import Footer from './components/layout/Footer';
 
 function App() {
