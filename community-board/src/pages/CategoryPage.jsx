@@ -45,7 +45,7 @@ const CategoryPage = () => {
         { id: 'meeting', label: '會議' },
         { id: 'lost-found', label: '失物' },
         { id: 'others', label: '其他' },
-        { id: 'qa', label: 'QA' }
+        { id: 'qa', label: 'Q&A' }
     ];
 
     /**
@@ -83,7 +83,9 @@ const CategoryPage = () => {
                 // 類別對照映射表
                 const categoryMap = {
                     '公告': '公告', '活動': '活動',
-                    '失物': '失物', '其他': '其他', 'Q&A': 'Q&A',
+                    '失物': '失物', '其他': '其他',
+                    // 存檔值可能為 "QA", "Q&A", 統一顯示為 "Q&A"
+                    'Q&A': 'Q&A', 'QA': 'Q&A',
                     '會議': '會議'
                 };
 
