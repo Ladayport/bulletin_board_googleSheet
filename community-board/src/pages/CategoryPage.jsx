@@ -82,9 +82,9 @@ const CategoryPage = () => {
             if (data.success && data.bulletins) {
                 // 類別對照映射表
                 const categoryMap = {
-                    '公告': '公告通知', '活動': '活動通知', '會議': '會議通知',
-                    '失物': '失物招領', '其他': '其他通知', 'QA': 'Q&A',
-                    '會議紀錄': '會議通知', '招領': '失物招領'
+                    '公告': '公告', '活動': '活動',
+                    '失物': '失物', '其他': '其他', 'QA': 'Q&A',
+                    '會議': '會議', '失物': '失物'
                 };
 
                 const rawList = data.bulletins;
@@ -171,7 +171,7 @@ const CategoryPage = () => {
     return (
         <div className="fade-in">
             <LoadingOverlay show={loading} />
-            <Header title="幸福社區雲端公佈欄" />
+            <Header title={siteTitle} />
 
             <main className="container">
                 {/* 頂部導覽列 (包含返回按鈕與分類標籤) */}

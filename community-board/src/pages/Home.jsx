@@ -56,11 +56,11 @@ const Home = () => {
 
         // 2. 準備分類對照表 (確保與 FeatureGrid 的選單對應)
         const categoryMap = {
-          '公告': '公告通知', '公告通知': '公告通知',
-          '活動': '活動通知', '活動通知': '活動通知',
-          '會議': '會議紀錄', '會議通知': '會議紀錄', '會議紀錄': '會議紀錄', '會議紀錄錄': '會議紀錄',
-          '失物': '失物招領', '失物招領': '失物招領', '招領': '失物招領',
-          '其他': '其他項目', '其他通知': '其他項目', '其他項目': '其他項目',
+          '公告': '公告',
+          '活動': '活動',
+          '會議': '會議',
+          '失物': '失物',
+          '其他': '其他',
           'QA': 'Q&A', 'Q&A': 'Q&A', '問答': 'Q&A'
         };
 
@@ -128,11 +128,11 @@ const Home = () => {
         for (let m = 0; m < validList.length; m++) {
           const item = validList[m];
           // 依據正規化後的類別進行統計 (必須與 FeatureGrid 的鍵值名稱一致)
-          if (item.category === '公告通知') newStats.notice++;
-          else if (item.category === '活動通知') newStats.activities++;
-          else if (item.category === '會議紀錄') newStats.meeting++;
-          else if (item.category === '失物招領') newStats.lostAndFound++;
-          else if (item.category === '其他項目') newStats.others++;
+          if (item.category === '公告') newStats.notice++;
+          else if (item.category === '活動') newStats.activities++;
+          else if (item.category === '會議') newStats.meeting++;
+          else if (item.category === '失物') newStats.lostAndFound++;
+          else if (item.category === '其他') newStats.others++;
           else if (item.category === 'Q&A') newStats.qa++;
         }
         setStats(newStats);
