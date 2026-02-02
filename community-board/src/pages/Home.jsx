@@ -213,19 +213,71 @@ const Home = () => {
 
             {/* 附件處理 */}
             {selectedBulletin.fileUrl && (
-              <div style={{ marginTop: '20px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-                <h4 style={{ fontSize: '1rem', marginBottom: '8px' }}>附件</h4>
-                <div className="mb-4">
-                  <a
-                    href={selectedBulletin.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-primary"
-                    style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
-                  >
-                    開啟附件
-                  </a>
-                </div>
+              <div style={{ marginTop: '20px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <h4 style={{ fontSize: '1rem', marginBottom: '12px' }}>附件內容</h4>
+
+                {(() => {
+                  // 判斷是否為圖片
+                  const isImage = selectedBulletin.fileType?.includes('image/');
+                  const isPDF = selectedBulletin.fileType === 'application/pdf';
+
+                  // 針對 Google Drive 連結進行轉換 (確保能直接顯示)
+                  let displayUrl = selectedBulletin.fileUrl;
+                  if (displayUrl.includes('drive.google.com')) {
+                    // 將 export=view 轉換為更強制的 export=download 格式或直接取 ID
+                    const fileId = displayUrl.match(/id=([^&]+)/)?.[1];
+                    if (fileId) {
+                      displayUrl = `https://lh3.googleusercontent.com/u/0/d/${fileId}`;
+                    }
+                  }
+
+                  if (isImage) {
+                    return (
+                      <div style={{ textAlign: 'center' }}>
+                        <img
+                          src={displayUrl}
+                          alt="公告附件"
+                          style={{
+                            maxWidth: '100%',
+                            height: 'auto',
+                            borderRadius: '6px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                            display: 'block',
+                            margin: '0 auto'
+                          }}
+                          onError={(e) => {
+                            // 如果高階連結失效，嘗試換回原連結
+                            if (e.target.src !== selectedBulletin.fileUrl) {
+                              e.target.src = selectedBulletin.fileUrl;
+                            } else {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'block';
+                            }
+                          }}
+                        />
+                        <div style={{ display: 'none', marginTop: '10px' }}>
+                          <p style={{ color: '#64748b', fontSize: '0.9rem' }}>圖片預覽載入中或無法顯示</p>
+                          <a href={selectedBulletin.fileUrl} target="_blank" rel="noopener noreferrer">點此直接開啟</a>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // PDF 或其他格式保持按鈕邏輯
+                  return (
+                    <div className="mb-4">
+                      <a
+                        href={selectedBulletin.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-primary"
+                        style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
+                      >
+                        開啟{isPDF ? ' PDF ' : '檔案'}附件
+                      </a>
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </div>
