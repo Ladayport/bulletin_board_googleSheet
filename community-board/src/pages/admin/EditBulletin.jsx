@@ -225,7 +225,7 @@ const EditBulletin = () => {
                             <option value="會議">會議</option>
                             <option value="失物">失物</option>
                             <option value="其他">其他</option>
-                            <option value="QA">QA</option>
+                            <option value="Q&A">Q&A</option>
                         </select>
                     </div>
                 </div>

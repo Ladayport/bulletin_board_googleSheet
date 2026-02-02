@@ -133,7 +133,7 @@ const Home = () => {
           else if (item.category === '會議') newStats.meeting++;
           else if (item.category === '失物') newStats.lostAndFound++;
           else if (item.category === '其他') newStats.others++;
-          else if (item.category === 'QA') newStats.qa++;
+          else if (item.category === 'Q&A') newStats.qa++;
         }
         setStats(newStats);
 
