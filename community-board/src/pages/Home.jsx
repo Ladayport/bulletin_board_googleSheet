@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { ShieldAlert } from 'lucide-react';
 import Header from '../components/layout/Header';
 import BulletinSection from '../components/home/BulletinSection';
 import FeatureGrid from '../components/home/FeatureGrid';
@@ -166,6 +167,30 @@ const Home = () => {
       <Header title={siteTitle} />
 
       <main className="container">
+
+        {/* --- [新增] 資安與法遵聲明區塊 (方案一) --- */}
+        <div style={{
+          backgroundColor: '#eff6ff', // 淺藍色背景
+          border: '1px solid #bfdbfe',
+          color: '#1e40af',           // 深藍色文字
+          padding: '12px 16px',
+          borderRadius: '8px',
+          marginBottom: '24px',
+          display: 'flex',
+          alignItems: 'start',
+          gap: '12px',
+          fontSize: '0.9rem',
+          lineHeight: '1.5'
+        }}>
+          <ShieldAlert size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
+          <div>
+            <strong>資安提醒：</strong> 本平台為公開資訊看板。
+            <span style={{ display: 'block', marginTop: '4px', color: '#2563eb' }}>
+              請勿張貼任何機密文件、個人隱私資料 (PII) 或未經授權之版權內容。違者將自行承擔法律責任。
+            </span>
+          </div>
+        </div>
+        {/* ------------------------------------------- */}
         {/* 緊急公告跑馬燈 */}
         {emergencyMessages.length > 0 && <EmergencyTicker messages={emergencyMessages} />}
 

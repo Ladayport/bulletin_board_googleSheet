@@ -207,6 +207,28 @@ const AddAnnouncement = () => {
         </div>
 
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end' }}>
+
+          {/* --- [新增] 發布前資安檢查警語 (方案二) --- */}
+          <div style={{
+            flex: 1,
+            marginRight: 'auto',
+            padding: '10px',
+            backgroundColor: '#fff7ed', // 淺橘色
+            border: '1px dashed #f97316',
+            borderRadius: '6px',
+            fontSize: '0.85rem',
+            color: '#c2410c',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+            <div>
+              <strong>發布前請再次確認：</strong>
+              內容未包含身分證字號、私人電話、薪資單等機敏個資，且未違反著作權法。
+            </div>
+          </div>
+          {/* ------------------------------------------- */}
           <button
             type="button"
             onClick={() => navigate('/admin')}
