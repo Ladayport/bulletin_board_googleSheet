@@ -51,11 +51,11 @@ const EditBulletin = () => {
                         setForm({
                             title: bulletin.title || '',
                             // 同步分類代碼：確保與 AddAnnouncement/CategoryPage 一致
-                            category: (bulletin.category === '公告' ? '公告通知' :
-                                bulletin.category === '活動' ? '活動通知' :
-                                    bulletin.category === '會議' ? '會議通知' :
-                                        bulletin.category === '失物' ? '失物招領' :
-                                            bulletin.category === '其他' ? '其他通知' : bulletin.category) || '公告通知',
+                            category: (bulletin.category === '公告通知' ? '公告' :
+                                bulletin.category === '活動通知' ? '活動' :
+                                    bulletin.category === '會議通知' || bulletin.category === '會議紀錄' ? '會議' :
+                                        bulletin.category === '失物招領' ? '失物' :
+                                            bulletin.category === '其他通知' || bulletin.category === '其他項目' ? '其他' : bulletin.category) || '公告',
                             content: bulletin.content || '',
                             isEmergency: bulletin.isUrgent === 'Y',
                             startDate: toInputFormat(bulletin.startDate, bulletin.startTime),
@@ -220,11 +220,11 @@ const EditBulletin = () => {
                             onChange={e => setForm({ ...form, category: e.target.value })}
                             style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
                         >
-                            <option value="公告通知">公告通知</option>
-                            <option value="活動通知">活動通知</option>
-                            <option value="會議紀錄">會議紀錄</option>
-                            <option value="失物招領">失物招領</option>
-                            <option value="其他項目">其他項目</option>
+                            <option value="公告">公告</option>
+                            <option value="活動">活動</option>
+                            <option value="會議">會議</option>
+                            <option value="失物">失物</option>
+                            <option value="其他">其他</option>
                             <option value="Q&A">Q&A</option>
                         </select>
                     </div>

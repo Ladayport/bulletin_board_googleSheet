@@ -84,7 +84,7 @@ const CategoryPage = () => {
                 const categoryMap = {
                     '公告': '公告', '活動': '活動',
                     '失物': '失物', '其他': '其他', 'QA': 'Q&A',
-                    '會議': '會議', '失物': '失物'
+                    '會議': '會議'
                 };
 
                 const rawList = data.bulletins;

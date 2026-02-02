@@ -147,11 +147,11 @@ const AddAnnouncement = () => {
               onChange={e => setForm({ ...form, category: e.target.value })}
               style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
             >
-              <option value="公告通知">公告通知</option>
-              <option value="活動通知">活動通知</option>
-              <option value="會議紀錄">會議紀錄</option>
-              <option value="失物招領">失物招領</option>
-              <option value="其他項目">其他項目</option>
+              <option value="公告">公告</option>
+              <option value="活動">活動</option>
+              <option value="會議">會議</option>
+              <option value="失物">失物</option>
+              <option value="其他">其他</option>
               <option value="Q&A">Q&A</option>
             </select>
           </div>
