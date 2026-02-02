@@ -52,7 +52,7 @@ const CategoryPage = () => {
      * 當進入頁面或 URL 分類代碼改變時，同步更新標籤狀態
      */
     useEffect(() => {
-        let matchedLabel = '公告通知'; // 預設值
+        let matchedLabel = '公告'; // 預設值
         // 使用傳統迴圈尋找對應的標籤名稱
         for (let i = 0; i < tabs.length; i++) {
             if (tabs[i].id === type) {
