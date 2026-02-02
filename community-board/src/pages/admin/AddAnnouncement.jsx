@@ -152,7 +152,7 @@ const AddAnnouncement = () => {
               <option value="會議">會議</option>
               <option value="失物">失物</option>
               <option value="其他">其他</option>
-              <option value="QA">Q&A</option>
+              <option value="Q&A">QA</option>
             </select>
           </div>
         </div>
