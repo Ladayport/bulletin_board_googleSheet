@@ -1,4 +1,6 @@
+// src/App.jsx
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
 import Home from './pages/Home';
 import Login from './pages/Login';
 import CategoryPage from './pages/CategoryPage';
@@ -11,7 +13,10 @@ import PrivateRoute from './components/layout/PrivateRoute';
 
 function App() {
     return (
-        <Router>
+        <Router future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true
+        }}>
             <ScrollToTop />
             <Routes>
                 {/* 公開頁面 */}
