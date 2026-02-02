@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import Modal from '../components/ui/Modal';
 import LoadingOverlay from '../components/ui/LoadingOverlay';
 import { api } from '../services/api';
+import { mockSiteData } from '../utils/mockData';
 
 /**
  * 分類頁面組件 (CategoryPage)
@@ -19,6 +20,7 @@ const CategoryPage = () => {
     const [activeTab, setActiveTab] = useState(''); // 當前選中的分類標籤名稱
     const [bulletins, setBulletins] = useState([]); // 經日期過濾後的公告清單
     const [loading, setLoading] = useState(true);
+    const [siteTitle, setSiteTitle] = useState(mockSiteData.title);
 
     /**
      * 輔助功能：計算預設日期範圍 (20天前 ~ 60天後)
@@ -80,6 +82,9 @@ const CategoryPage = () => {
             const data = await api.get('getHomeData');
 
             if (data.success && data.bulletins) {
+                if (data.siteTitle) {
+                    setSiteTitle(data.siteTitle);
+                }
                 // 類別對照映射表
                 const categoryMap = {
                     '公告': '公告', '活動': '活動',
