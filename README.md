@@ -41,6 +41,17 @@ npm run dev
 - **首頁**: [http://localhost:5173](http://localhost:5173)
 - **後台登入**: [http://localhost:5173/login](http://localhost:5173/login) (預設帳號: `admin` / `admin`)
 
+### 6. 使用 VS Code 偵錯 (Debugging)
+專案已配置 VS Code 偵錯環境，可直接使用 F5 啟動。
+
+1. **啟動偵錯**:
+   - 在 VS Code 中按下 `F5`，或點擊左側「執行與偵錯」並選擇「啟動 Chrome (Vite)」。
+   - VS Code 會自動執行 `npm run dev` 並開啟 Chrome 瀏覽器。
+
+2. **設定說明 (Configuration)**:
+   - **launch.json**: 已修正 URL 為 `http://localhost:5173/bulletin_board_googleSheet/` 並設定正確的 `webRoot`。
+   - **tasks.json**: 新增 `npm: dev` 任務，支援自動啟動開發伺服器與背景執行偵測。
+
 ---
 
 ## 🛠️ 功能說明
