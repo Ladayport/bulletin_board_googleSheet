@@ -11,6 +11,9 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AddAnnouncement from './pages/admin/AddAnnouncement';
 import ManageBulletins from './pages/admin/ManageBulletins';
 import EditBulletin from './pages/admin/EditBulletin';
+import QuoteInquiryPage from './pages/admin/QuoteInquiryPage';
+import QuoteVotePage from './pages/admin/QuoteVotePage';
+import InquiryViewPage from './pages/InquiryViewPage';
 import PrivateRoute from './components/layout/PrivateRoute';
 import Footer from './components/layout/Footer';
 
@@ -32,6 +35,7 @@ function App() {
                     <Route path="/category/lost-found/:id" element={<EngineeringDetail />} />
                     <Route path="/category/engineering" element={<EngineeringPage />} />
                     <Route path="/category/engineering/:id" element={<EngineeringDetail />} />
+                    <Route path="/engineering/inquiries" element={<InquiryViewPage />} />
                     <Route path="/category/:type" element={<CategoryPage />} />
 
                     {/* 後台保護區域 */}
@@ -40,6 +44,8 @@ function App() {
                         <Route path="/admin/add" element={<AddAnnouncement />} />
                         <Route path="/admin/manage" element={<ManageBulletins />} />
                         <Route path="/admin/edit/:id" element={<EditBulletin />} />
+                        <Route path="/admin/inquiry" element={<QuoteInquiryPage />} />
+                        <Route path="/admin/inquiry/vote" element={<QuoteVotePage />} />
                     </Route>
                 </Routes>
             </div>

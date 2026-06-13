@@ -176,11 +176,16 @@ const EngineeringPage = () => {
     fetchData();
   }, []);
 
-  // 監聽網址參數，若有 ?openAdd=true 則自動打開新增彈窗
+  // 監聽網址參數，若有 ?openAdd=true 則自動打開新增彈窗，並支援載入詢價單引用資料
   useEffect(() => {
     const query = new URLSearchParams(location.search);
     if (query.get('openAdd') === 'true') {
-      openAddModal();
+      const quoteId = query.get('quoteId') || '';
+      const title = query.get('title') || '';
+      const vendor = query.get('vendor') || '';
+      const phone = query.get('phone') || '';
+      
+      openAddModal({ quoteId, title, vendor, phone });
       // 清除網址參數，避免重複觸發
       navigate('/category/engineering', { replace: true });
     }
@@ -483,21 +488,21 @@ const EngineeringPage = () => {
   };
 
   // 開啟新增視窗
-  const openAddModal = () => {
+  const openAddModal = (initialData = {}) => {
     setAddForm({
       uniqueId: generateUniqueCode(),
-      title: '',
+      title: initialData.title || '',
       startDate: new Date().toISOString().split('T')[0],
       endDate: new Date().toISOString().split('T')[0],
-      notes: '',
+      notes: initialData.quoteId ? `[引用詢價單號: ${initialData.quoteId}]` : '',
       file: null,
       fileData: '',
       fileName: '',
       fileType: '',
       contactPerson: '',
       contactPhone: '',
-      vendorName: '',
-      vendorPhone: ''
+      vendorName: initialData.vendor || '',
+      vendorPhone: initialData.phone || ''
     });
     setAddPreview(null);
     setIsAddModalOpen(true);
@@ -796,9 +801,14 @@ const EngineeringPage = () => {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           marginTop: '24px', marginBottom: '24px', flexWrap: 'wrap', gap: '16px'
         }}>
-          <button onClick={() => navigate('/')} className="btn btn-secondary" style={{ boxShadow: 'var(--shadow-sm)' }}>
-            <ArrowLeft size={20} /> 返回首頁
-          </button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button onClick={() => navigate('/')} className="btn btn-secondary" style={{ boxShadow: 'var(--shadow-sm)' }}>
+              <ArrowLeft size={20} /> 返回首頁
+            </button>
+            <button onClick={() => navigate('/engineering/inquiries')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px', boxShadow: 'var(--shadow-sm)' }}>
+              <FileText size={18} /> 查看詢價比價歷程
+            </button>
+          </div>
 
           <h2 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.8rem', fontWeight: '700' }}>
             🏗️ 工程進度追蹤系統

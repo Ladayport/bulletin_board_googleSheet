@@ -196,6 +196,38 @@ function handleGetAction(action, params) {
 
       return { success: true, bulletins: finalBulletins };
 
+    case 'getInquiryData':
+      const ssInquiry = SpreadsheetApp.openById(SHEET_ID);
+      const inquirySheet = getOrCreateInquirySheet(ssInquiry);
+      const inquiryRows = inquirySheet.getDataRange().getValues();
+      inquiryRows.shift(); // 移除標題列
+      
+      const inquiries = [];
+      for (let i = 0; i < inquiryRows.length; i++) {
+        const row = inquiryRows[i];
+        // row[8] 是有效狀態，若為 'D' 則過濾掉 (軟刪除)；若狀態為 '強制結案' 則在畫面上隱藏
+        if ((row[8] || '') !== 'D' && row[2] !== '強制結案') {
+          let quotes = [];
+          try {
+            quotes = row[5] ? JSON.parse(row[5]) : [];
+          } catch(e) {
+            quotes = [];
+          }
+          inquiries.push({
+            id: row[0].toString(),
+            title: row[1],
+            status: row[2] || '新單',
+            startDate: formatDate(row[3]),
+            initiator: row[4],
+            quotes: quotes,
+            timestamp: row[6] ? row[6].toString() : '',
+            operator: row[7]
+          });
+        }
+      }
+      // 倒序排列，讓最新發起的在前面
+      return { success: true, inquiries: inquiries.reverse() };
+
     default:
       return { success: false, message: 'Unknown action' };
   }
@@ -279,6 +311,127 @@ function handlePostAction(action, data) {
 
     case 'deleteBulletin':
       return updateBulletin(ss, data, true);
+
+    case 'addInquiry':
+      const inquirySheet = getOrCreateInquirySheet(ss);
+      const today = new Date();
+      
+      const pad = (num) => String(num).padStart(2, '0');
+      const yyyy = today.getFullYear();
+      const mm = pad(today.getMonth() + 1);
+      const dd = pad(today.getDate());
+      const hh = pad(today.getHours());
+      const min = pad(today.getMinutes());
+      const ss_sec = pad(today.getSeconds());
+      const inquiryId = `Q${yyyy}${mm}${dd}${hh}${min}${ss_sec}`;
+      
+      const startD = data.startDate ? new Date(data.startDate) : today;
+      
+      inquirySheet.appendRow([
+        inquiryId,
+        data.title,
+        '新單',
+        formatDate(startD),
+        data.initiator || '系統發起',
+        JSON.stringify([]), // 初始報價歷程為空
+        formatDate(today) + ' ' + formatTime(today),
+        data.operator || 'Admin',
+        '' // 有效狀態
+      ]);
+      
+      writeLog(ss, data.operator || 'Admin', `新增詢價項目: ${data.title} (${inquiryId})`);
+      return { success: true, message: '詢價項目新增成功', inquiryId: inquiryId };
+      
+    case 'addQuote':
+      const quoteSheet = getOrCreateInquirySheet(ss);
+      const allRows = quoteSheet.getDataRange().getValues();
+      let foundRowIndex = -1;
+      for (let i = 0; i < allRows.length; i++) {
+        if (allRows[i][0].toString() === data.inquiryId.toString()) {
+          foundRowIndex = i;
+          break;
+        }
+      }
+      
+      if (foundRowIndex === -1) {
+        return { success: false, message: '找不到此詢價單號: ' + data.inquiryId };
+      }
+      
+      const sheetRowIndex = foundRowIndex + 1;
+      let existingQuotes = [];
+      try {
+        existingQuotes = allRows[foundRowIndex][5] ? JSON.parse(allRows[foundRowIndex][5]) : [];
+      } catch(e) {
+        existingQuotes = [];
+      }
+      
+      let quoteFileUrl = '';
+      if (data.fileData && data.fileName) {
+        quoteFileUrl = saveFileToDrive(data.fileData, data.fileName, data.fileType);
+      }
+      
+      const newQuote = {
+        id: 'QTE' + new Date().getTime().toString(),
+        vendorName: data.vendorName,
+        vendorPhone: data.vendorPhone,
+        quoteAmount: Number(data.quoteAmount || 0),
+        fileUrl: quoteFileUrl,
+        fileType: data.fileType || '',
+        createdTime: formatDate(new Date()) + ' ' + formatTime(new Date())
+      };
+      
+      existingQuotes.push(newQuote);
+      
+      quoteSheet.getRange(sheetRowIndex, 6).setValue(JSON.stringify(existingQuotes));
+      quoteSheet.getRange(sheetRowIndex, 8).setValue(data.operator || 'Admin');
+      
+      writeLog(ss, data.operator || 'Admin', `為詢價項目 ${data.inquiryId} 新增廠商報價: ${data.vendorName} (${data.quoteAmount} 元)`);
+      return { success: true, message: '新增報價成功' };
+      
+    case 'updateInquiryStatus':
+      const statusSheet = getOrCreateInquirySheet(ss);
+      const sRows = statusSheet.getDataRange().getValues();
+      let sRowIndex = -1;
+      for (let i = 0; i < sRows.length; i++) {
+        if (sRows[i][0].toString() === data.id.toString()) {
+          sRowIndex = i;
+          break;
+        }
+      }
+      
+      if (sRowIndex === -1) {
+        return { success: false, message: '找不到此詢價單號: ' + data.id };
+      }
+      
+      const sActualRow = sRowIndex + 1;
+      statusSheet.getRange(sActualRow, 3).setValue(data.status);
+      statusSheet.getRange(sActualRow, 8).setValue(data.operator || 'Admin');
+      
+      writeLog(ss, data.operator || 'Admin', `更新詢價項目 ${data.id} 狀態為: ${data.status}`);
+      return { success: true, message: '更新狀態成功' };
+      
+    case 'deleteInquiry':
+      const delSheet = getOrCreateInquirySheet(ss);
+      const dRows = delSheet.getDataRange().getValues();
+      let dRowIndex = -1;
+      for (let i = 0; i < dRows.length; i++) {
+        if (dRows[i][0].toString() === data.id.toString()) {
+          dRowIndex = i;
+          break;
+        }
+      }
+      
+      if (dRowIndex === -1) {
+        return { success: false, message: '找不到此詢價單號: ' + data.id };
+      }
+      
+      const dActualRow = dRowIndex + 1;
+      // 不做物理與軟刪除，而是將第三欄 (項目狀態) 設為 '強制結案' 以便在前端隱藏
+      delSheet.getRange(dActualRow, 3).setValue('強制結案');
+      delSheet.getRange(dActualRow, 8).setValue(data.operator || 'Admin');
+      
+      writeLog(ss, data.operator || 'Admin', `將詢價項目 ${data.id} 強制結案並隱藏`);
+      return { success: true, message: '項目已強制結案並隱藏' };
 
     default:
       return { success: false, message: 'Unknown POST action' };
@@ -443,4 +596,27 @@ function formatTime(date) {
   const d = new Date(date);
   if (isNaN(d.getTime())) return '';
   return Utilities.formatDate(d, Session.getScriptTimeZone(), "HH:mm:ss");
+}
+
+/**
+ * 輔助：安全建立或取得「工程詢價資料」工作表
+ */
+function getOrCreateInquirySheet(ss) {
+  let sheet = ss.getSheetByName('工程詢價資料');
+  if (!sheet) {
+    sheet = ss.insertSheet('工程詢價資料');
+    // 寫入標題列：單號, 項目名稱, 項目狀態, 發起日期, 發起人, 報價歷程JSON, 建立時間, 更新人員, 有效狀態
+    sheet.appendRow([
+      '單號',
+      '項目名稱',
+      '項目狀態',
+      '發起日期',
+      '發起人',
+      '報價歷程JSON',
+      '建立時間',
+      '更新人員',
+      '有效狀態'
+    ]);
+  }
+  return sheet;
 }

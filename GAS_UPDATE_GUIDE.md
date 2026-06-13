@@ -101,5 +101,21 @@ function handleGetAction(action, params) {
 3. **刪除測試**：
    - 點擊刪除按鈕，確認有確認對話框
    - 刪除後檢查 Google Sheet 狀態欄位是否變為 `D`
-   - 確認前端列表不再顯示該公告
-   - 檢查 Log 工作表是否記錄「刪除公告」
+    - 確認前端列表不再顯示該公告
+    - 檢查 Log 工作表是否記錄「刪除公告」
+
+---
+
+## 2026/06/14 更新：工程詢價與報價歷程管理功能
+
+為了解決工程項目發起前的前期詢價比價、多廠商報價管理、投票單彙整匯出需求，GAS 後端程式碼 `Code.gs` 已新增下列幾個 Action 處理：
+
+### 1. 讀取與新增 Action (handleGetAction & handlePostAction)
+請將 `Code.gs` 中新增的 case 區段完整部署至您的 GAS Web App：
+- `handleGetAction` 新增了 `getInquiryData` case
+- `handlePostAction` 新增了 `addInquiry`、`addQuote`、`updateInquiryStatus`、`deleteInquiry` 等 case
+
+並於 `Code.gs` 的最底部加上 `getOrCreateInquirySheet(ss)` 輔助函式。這會在您第一次讀取詢價資料時，**自動在您的 Google 試算表中建立一個名為「工程詢價資料」的新分頁/工作表**。
+
+### 2. 部署新版本
+請務必照著「部署步驟」建立一個**新版本**（不要建立新部署網址，僅以新版本升級），讓前端可以直接與新增的 API 方法通訊。

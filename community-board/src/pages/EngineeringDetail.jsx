@@ -573,7 +573,7 @@ const EngineeringDetail = () => {
             </div>
 
             {/* 兩欄式內容區 */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', lg: '1fr', gap: '24px', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))' }}>
+            <div style={{ display: 'grid', gap: '24px', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))' }}>
               
               {/* ==================== 左側欄：工程資訊與聯絡 ==================== */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>

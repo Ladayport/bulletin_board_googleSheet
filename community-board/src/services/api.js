@@ -78,5 +78,40 @@ export const api = {
    */
   deleteBulletin: async (id, operator) => {
     return api.post('deleteBulletin', { id, operator });
+  },
+
+  /**
+   * 取得所有詢價項目資料
+   */
+  getInquiries: async () => {
+    return api.get('getInquiryData');
+  },
+
+  /**
+   * 新增一筆詢價項目
+   */
+  addInquiry: async (inquiryData) => {
+    return api.post('addInquiry', inquiryData);
+  },
+
+  /**
+   * 為詢價項目新增一筆廠商報價歷程 (包含檔案上傳)
+   */
+  addQuote: async (quoteData) => {
+    return api.post('addQuote', quoteData);
+  },
+
+  /**
+   * 更新詢價項目狀態 (新單, 詢價, 計畫終止, 結案)
+   */
+  updateInquiryStatus: async (id, status, operator) => {
+    return api.post('updateInquiryStatus', { id, status, operator });
+  },
+
+  /**
+   * 刪除詢價項目 (軟刪除)
+   */
+  deleteInquiry: async (id, operator) => {
+    return api.post('deleteInquiry', { id, operator });
   }
 };
