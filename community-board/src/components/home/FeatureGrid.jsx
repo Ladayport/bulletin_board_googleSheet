@@ -37,7 +37,7 @@ const FeatureGrid = ({ stats }) => {
         },
         {
             id: 'engineering',
-            title: '工程進度',
+            title: '工程進度追蹤看板',
             count: stats.lostAndFound || 0,
             icon: <Wrench size={32} color="#FFFFFF" />,
             bgColor: '#f97316' // 亮橘/工程色

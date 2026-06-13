@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import CategoryPage from './pages/CategoryPage';
 import EngineeringPage from './pages/EngineeringPage';
+import EngineeringListPage from './pages/EngineeringListPage';
 import EngineeringDetail from './pages/EngineeringDetail';
 import ScrollToTop from './components/ui/ScrollToTop';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -31,9 +32,11 @@ function App() {
                     {/* 公開頁面 */}
                     <Route path="/" element={<Home />} />
                     <Route path="/login" element={<Login />} />
-                    <Route path="/category/lost-found" element={<EngineeringPage />} />
+                    <Route path="/category/lost-found" element={<EngineeringListPage />} />
+                    <Route path="/category/lost-found/board" element={<EngineeringPage />} />
                     <Route path="/category/lost-found/:id" element={<EngineeringDetail />} />
-                    <Route path="/category/engineering" element={<EngineeringPage />} />
+                    <Route path="/category/engineering" element={<EngineeringListPage />} />
+                    <Route path="/category/engineering/board" element={<EngineeringPage />} />
                     <Route path="/category/engineering/:id" element={<EngineeringDetail />} />
                     <Route path="/engineering/inquiries" element={<InquiryViewPage />} />
                     <Route path="/category/:type" element={<CategoryPage />} />

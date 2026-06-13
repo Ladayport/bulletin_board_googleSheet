@@ -78,7 +78,7 @@ const EngineeringDetail = () => {
   const [loading, setLoading] = useState(true);
   const [loadingMessage, setLoadingMessage] = useState('正在取得工程進度詳細資料，請稍候...');
   const [project, setProject] = useState(null);
-  const [siteTitle, setSiteTitle] = useState('工程進度系統');
+  const [siteTitle, setSiteTitle] = useState('工程進度追蹤看板');
 
   // 預覽狀態
   const [editPreview, setEditPreview] = useState(null);
@@ -503,7 +503,7 @@ const EngineeringDetail = () => {
             className="btn btn-secondary" 
             style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', boxShadow: 'var(--shadow-sm)' }}
           >
-            <ArrowLeft size={18} /> 返回工程進度表
+            <ArrowLeft size={18} /> 返回工程進度追蹤看板
           </button>
         </div>
 
