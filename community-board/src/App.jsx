@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import CategoryPage from './pages/CategoryPage';
 import EngineeringPage from './pages/EngineeringPage';
+import EngineeringDetail from './pages/EngineeringDetail';
 import ScrollToTop from './components/ui/ScrollToTop';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AddAnnouncement from './pages/admin/AddAnnouncement';
@@ -28,7 +29,9 @@ function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/category/lost-found" element={<EngineeringPage />} />
+                    <Route path="/category/lost-found/:id" element={<EngineeringDetail />} />
                     <Route path="/category/engineering" element={<EngineeringPage />} />
+                    <Route path="/category/engineering/:id" element={<EngineeringDetail />} />
                     <Route path="/category/:type" element={<CategoryPage />} />
 
                     {/* 後台保護區域 */}

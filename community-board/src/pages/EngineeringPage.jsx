@@ -51,7 +51,7 @@ const EngineeringPage = () => {
   const [loadingMessage, setLoadingMessage] = useState('資料載入中，請稍候...');
   const [siteTitle, setSiteTitle] = useState(mockSiteData.title);
   const [rawBulletins, setRawBulletins] = useState([]);
-  
+
   // 權限狀態
   const isAuthenticated = authService.isAuthenticated();
 
@@ -287,7 +287,7 @@ const EngineeringPage = () => {
     : '#e2e8f0';
 
   // --- 操作按鈕與表單處理 ---
-  
+
   // 開啟新增視窗
   const openAddModal = () => {
     setAddForm({
@@ -425,7 +425,7 @@ const EngineeringPage = () => {
 
       // 串接新的工期
       const updatedPhases = [...selectedProject.phases, newPhase];
-      
+
       // 更新主項目的總結束日期為所有工期的最晚時間
       let maxEnd = new Date(selectedProject.endDate);
       updatedPhases.forEach(p => {
@@ -457,7 +457,6 @@ const EngineeringPage = () => {
 
       const response = await api.editBulletin(payload);
       if (response.success) {
-        alert('延伸工期新增成功！');
         setIsEditModalOpen(false);
         fetchData();
       } else {
@@ -680,7 +679,7 @@ const EngineeringPage = () => {
               <p style={{ margin: '0 0 16px 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                 (統計過去一年內開工的工程，共 {totalPieCount} 筆)
               </p>
-              
+
               {/* 圖例說明 */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '120px', overflowY: 'auto' }}>
                 {pieData.map(d => (
@@ -749,7 +748,7 @@ const EngineeringPage = () => {
           {activeProjects.length > 0 ? (
             <div style={{ overflowX: 'auto', padding: '24px' }}>
               <div style={{ minWidth: '800px', position: 'relative' }}>
-                
+
                 {/* 1. 甘特圖時間軸頭部 (日期刻度) */}
                 <div style={{
                   display: 'grid', gridTemplateColumns: '220px 1fr',
@@ -791,13 +790,17 @@ const EngineeringPage = () => {
                     >
                       {/* 左側：工程標題、識別碼與操作按鈕 */}
                       <div style={{ paddingRight: '16px' }}>
-                        <div style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '0.95rem', marginBottom: '2px' }}>
+                        <div 
+                          onClick={() => navigate(`/category/engineering/${project.id}`)}
+                          style={{ fontWeight: '600', color: 'var(--primary-color)', fontSize: '0.95rem', marginBottom: '2px', cursor: 'pointer', textDecoration: 'underline' }}
+                          title="點擊查看工程歷程與明細"
+                        >
                           {project.title}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginBottom: '8px' }}>
                           ID: {project.id}
                         </div>
-                        
+
                         {/* 備註微提示 */}
                         {project.notes && (
                           <div style={{
@@ -855,13 +858,14 @@ const EngineeringPage = () => {
                           const left = getLeftPercent(phase.startDate);
                           const width = getWidthPercent(phase.startDate, phase.endDate);
                           // 根據工期給予不同的漸層色
-                          const color = pIdx === 0 
+                          const color = pIdx === 0
                             ? 'linear-gradient(90deg, #3b82f6, #60a5fa)'  // 第一期為藍色
                             : 'linear-gradient(90deg, #10b981, #34d399)'; // 延伸工期為綠色
-                          
+
                           return (
                             <div
                               key={pIdx}
+                              onClick={() => navigate(`/category/engineering/${project.id}`)}
                               style={{
                                 position: 'absolute',
                                 left: `${left}%`,
@@ -875,7 +879,7 @@ const EngineeringPage = () => {
                                 boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
                                 transition: 'transform 0.15s ease'
                               }}
-                              title={`${phase.title}: ${phase.startDate} ~ ${phase.endDate}`}
+                              title={`${phase.title}: ${phase.startDate} ~ ${phase.endDate}\n點擊查看工程歷程與明細`}
                               className="gantt-bar-segment"
                             >
                               {/* 懸停詳細浮動視窗的簡介標籤 */}
@@ -949,7 +953,11 @@ const EngineeringPage = () => {
               >
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
-                    <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-main)' }}>
+                    <h4 
+                      onClick={() => navigate(`/category/engineering/${project.id}`)}
+                      style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600', color: 'var(--primary-color)', cursor: 'pointer', textDecoration: 'underline' }}
+                      title="點擊查看工程歷程與明細"
+                    >
                       {project.title}
                     </h4>
                     <span style={{
