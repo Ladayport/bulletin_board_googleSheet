@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit2, CheckCircle, Upload, Calendar, FileText, Info } from 'lucide-react';
 import Header from '../components/layout/Header';
 import Modal from '../components/ui/Modal';
@@ -7,18 +7,7 @@ import LoadingOverlay from '../components/ui/LoadingOverlay';
 import { api } from '../services/api';
 import { authService } from '../services/auth';
 import { mockSiteData } from '../utils/mockData';
-
-/**
- * 輔助功能：將檔案轉換為 Base64 字串
- */
-const fileToBase64 = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = (error) => reject(error);
-  });
-};
+import { compressImage, fileToBase64 } from '../utils/imageUtils';
 
 /**
  * 輔助功能：產生唯一碼 L+年+月+日+時+分+秒
@@ -45,12 +34,72 @@ const formatDateStr = (date) => {
   return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
 };
 
+/**
+ * 輔助功能：針對 Google Drive 連結進行轉換 (確保能直接顯示)
+ */
+const getDisplayFileUrl = (url) => {
+  if (!url) return '';
+  if (url.includes('drive.google.com')) {
+    const fileId = url.match(/id=([^&]+)/)?.[1];
+    if (fileId) {
+      return `https://lh3.googleusercontent.com/u/0/d/${fileId}`;
+    }
+  }
+  return url;
+};
+
+/**
+ * 輔助功能：依據檔案類型渲染附件（維持按鈕存在，點擊時另開分頁查看）
+ */
+const renderFileAttachment = (fileUrl, fileType) => {
+  if (!fileUrl) return null;
+  
+  const isImage = fileType?.includes('image/');
+  const isPDF = fileType === 'application/pdf';
+  const displayUrl = fileUrl;
+
+  let btnLabel = '下載檔案';
+  if (isImage) btnLabel = '檢視圖片附件';
+  else if (isPDF) btnLabel = '開啟 PDF 附件';
+
+  return (
+    <div style={{ marginTop: '6px' }}>
+      <a
+        href={displayUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => {
+          e.stopPropagation(); // 阻止冒泡，避免點擊卡片跳轉
+        }}
+        style={{
+          color: 'var(--primary-color)',
+          fontSize: '0.75rem',
+          textDecoration: 'none',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          fontWeight: '600',
+          cursor: 'pointer'
+        }}
+      >
+        <FileText size={12} /> {btnLabel}
+      </a>
+    </div>
+  );
+};
+
 const EngineeringPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [loadingMessage, setLoadingMessage] = useState('資料載入中，請稍候...');
   const [siteTitle, setSiteTitle] = useState(mockSiteData.title);
   const [rawBulletins, setRawBulletins] = useState([]);
+
+  // 預覽狀態
+  const [addPreview, setAddPreview] = useState(null);
+  const [editPreview, setEditPreview] = useState(null);
+  const [completePreview, setCompletePreview] = useState(null);
 
   // 權限狀態
   const isAuthenticated = authService.isAuthenticated();
@@ -90,6 +139,9 @@ const EngineeringPage = () => {
     endDate: '',
     notes: '',
     file: null,
+    fileData: '',
+    fileName: '',
+    fileType: '',
     contactPerson: '',
     contactPhone: '',
     vendorName: '',
@@ -102,6 +154,9 @@ const EngineeringPage = () => {
     startDate: '',
     endDate: '',
     file: null,
+    fileData: '',
+    fileName: '',
+    fileType: '',
     notes: ''
   });
 
@@ -110,6 +165,9 @@ const EngineeringPage = () => {
     title: '',
     endDate: '',
     file: null,
+    fileData: '',
+    fileName: '',
+    fileType: '',
     notes: ''
   });
 
@@ -117,6 +175,16 @@ const EngineeringPage = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // 監聽網址參數，若有 ?openAdd=true 則自動打開新增彈窗
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    if (query.get('openAdd') === 'true') {
+      openAddModal();
+      // 清除網址參數，避免重複觸發
+      navigate('/category/engineering', { replace: true });
+    }
+  }, [location, navigate]);
 
   const fetchData = async () => {
     try {
@@ -136,9 +204,9 @@ const EngineeringPage = () => {
     }
   };
 
-  // 處理資料：過濾出 category 為 '工程' 且 status !== 'D' 的資料，並解析其中的 JSON 內容
+  // 處理資料：過濾出 category 為 '工程'、'失物' 或 '失物招領' 且 status !== 'D' 的資料，並解析其中的 JSON 內容
   const parsedProjects = rawBulletins
-    .filter(b => b.category === '工程' && b.status !== 'D')
+    .filter(b => (b.category === '工程' || b.category === '失物' || b.category === '失物招領') && b.status !== 'D')
     .map(b => {
       let parsed = null;
       try {
@@ -160,6 +228,21 @@ const EngineeringPage = () => {
         }
       ];
       const completedInfo = parsed?.completedInfo || null;
+
+      // 防禦性修正：若 phases 中任何工期的 fileUrl 是 placeholder，則以最外層的真實 fileUrl 替代 (供 GAS 未升級時相容)
+      if (phases && phases.length > 0) {
+        phases.forEach(p => {
+          if (p.fileUrl === '[LATEST_UPLOAD_URL]') {
+            p.fileUrl = b.fileUrl || '';
+          }
+        });
+      }
+      // 同理，如果結案驗收單的 fileUrl 是 placeholder，則以最外層的真實 fileUrl 替代
+      if (completedInfo) {
+        if (completedInfo.fileUrl === '[LATEST_UPLOAD_URL]') {
+          completedInfo.fileUrl = b.fileUrl || '';
+        }
+      }
 
       // 計算整個工程的最早開始日與最晚結束日
       let minStart = new Date(b.startDate);
@@ -187,14 +270,17 @@ const EngineeringPage = () => {
       };
     });
 
-  // 依據篩選日期區間進行項目過濾 (工程開始日期在區間內)
+  // 依據篩選日期區間進行項目過濾
+  // 【特別修正】進行中/未完成的工程項目不受篩選日期限制，永遠保留以防被遺漏；
+  // 已完成/已結案的工程項目僅在開始日期符合篩選日期區間時才保留，避免頁面過於擁擠
   const filterStart = new Date(dateFilter.startDate);
   const filterEnd = new Date(dateFilter.endDate);
   filterEnd.setHours(23, 59, 59, 999);
 
   const filteredProjects = parsedProjects.filter(p => {
+    if (!p.isCompleted) return true; // 未完成工程永遠顯示
     const pStart = p.projectStartDate;
-    return pStart >= filterStart && pStart <= filterEnd;
+    return pStart >= filterStart && pStart <= filterEnd; // 已完成工程才需篩選日期
   });
 
   // 未完成與已完成工程分流
@@ -288,6 +374,114 @@ const EngineeringPage = () => {
 
   // --- 操作按鈕與表單處理 ---
 
+  // 處理新增工程檔案選擇
+  const handleAddFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'application/pdf'].includes(file.type)) {
+      alert('只支援 JPG, PNG 圖片或 PDF 文件');
+      return;
+    }
+
+    try {
+      let processedFile = file;
+      let base64 = '';
+
+      if (file.type.startsWith('image/')) {
+        processedFile = await compressImage(file);
+        setAddPreview(URL.createObjectURL(processedFile));
+      } else {
+        setAddPreview(null);
+      }
+
+      base64 = await fileToBase64(processedFile);
+
+      setAddForm(prev => ({
+        ...prev,
+        file: processedFile,
+        fileName: file.name,
+        fileType: file.type,
+        fileData: base64
+      }));
+    } catch (err) {
+      console.error('檔案處理失敗', err);
+      alert('檔案處理失敗');
+    }
+  };
+
+  // 處理編輯延伸工期檔案選擇
+  const handleEditFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'application/pdf'].includes(file.type)) {
+      alert('只支援 JPG, PNG 圖片或 PDF 文件');
+      return;
+    }
+
+    try {
+      let processedFile = file;
+      let base64 = '';
+
+      if (file.type.startsWith('image/')) {
+        processedFile = await compressImage(file);
+        setEditPreview(URL.createObjectURL(processedFile));
+      } else {
+        setEditPreview(null);
+      }
+
+      base64 = await fileToBase64(processedFile);
+
+      setEditForm(prev => ({
+        ...prev,
+        file: processedFile,
+        fileName: file.name,
+        fileType: file.type,
+        fileData: base64
+      }));
+    } catch (err) {
+      console.error('檔案處理失敗', err);
+      alert('檔案處理失敗');
+    }
+  };
+
+  // 處理結案檔案選擇
+  const handleCompleteFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'application/pdf'].includes(file.type)) {
+      alert('只支援 JPG, PNG 圖片或 PDF 文件');
+      return;
+    }
+
+    try {
+      let processedFile = file;
+      let base64 = '';
+
+      if (file.type.startsWith('image/')) {
+        processedFile = await compressImage(file);
+        setCompletePreview(URL.createObjectURL(processedFile));
+      } else {
+        setCompletePreview(null);
+      }
+
+      base64 = await fileToBase64(processedFile);
+
+      setCompleteForm(prev => ({
+        ...prev,
+        file: processedFile,
+        fileName: file.name,
+        fileType: file.type,
+        fileData: base64
+      }));
+    } catch (err) {
+      console.error('檔案處理失敗', err);
+      alert('檔案處理失敗');
+    }
+  };
+
   // 開啟新增視窗
   const openAddModal = () => {
     setAddForm({
@@ -297,11 +491,15 @@ const EngineeringPage = () => {
       endDate: new Date().toISOString().split('T')[0],
       notes: '',
       file: null,
+      fileData: '',
+      fileName: '',
+      fileType: '',
       contactPerson: '',
       contactPhone: '',
       vendorName: '',
       vendorPhone: ''
     });
+    setAddPreview(null);
     setIsAddModalOpen(true);
   };
 
@@ -316,15 +514,9 @@ const EngineeringPage = () => {
     setLoadingMessage('正在發佈新工程項目並上傳附件，請稍候...');
     setLoading(true);
     try {
-      let fileData = '';
-      let fileName = '';
-      let fileType = '';
-
-      if (addForm.file) {
-        fileData = await fileToBase64(addForm.file);
-        fileName = addForm.file.name;
-        fileType = addForm.file.type;
-      }
+      const fileData = addForm.fileData || '';
+      const fileName = addForm.fileName || '';
+      const fileType = addForm.fileType || '';
 
       // 包裝主項目的 JSON content
       const contentObj = {
@@ -386,8 +578,12 @@ const EngineeringPage = () => {
       startDate: new Date().toISOString().split('T')[0],
       endDate: new Date().toISOString().split('T')[0],
       file: null,
+      fileData: '',
+      fileName: '',
+      fileType: '',
       notes: ''
     });
+    setEditPreview(null);
     setIsEditModalOpen(true);
   };
 
@@ -402,15 +598,9 @@ const EngineeringPage = () => {
     setLoadingMessage('正在新增延伸工期並上傳檔案，請稍候...');
     setLoading(true);
     try {
-      let fileData = '';
-      let fileName = '';
-      let fileType = '';
-
-      if (editForm.file) {
-        fileData = await fileToBase64(editForm.file);
-        fileName = editForm.file.name;
-        fileType = editForm.file.type;
-      }
+      const fileData = editForm.fileData || '';
+      const fileName = editForm.fileName || '';
+      const fileType = editForm.fileType || '';
 
       // 建立新的延伸工期項目
       const newPhase = {
@@ -477,8 +667,12 @@ const EngineeringPage = () => {
       title: '竣工結案驗收',
       endDate: new Date().toISOString().split('T')[0],
       file: null,
+      fileData: '',
+      fileName: '',
+      fileType: '',
       notes: ''
     });
+    setCompletePreview(null);
     setIsCompleteModalOpen(true);
   };
 
@@ -493,15 +687,9 @@ const EngineeringPage = () => {
     setLoadingMessage('正在辦理工程結案與上傳驗收單，請稍候...');
     setLoading(true);
     try {
-      let fileData = '';
-      let fileName = '';
-      let fileType = '';
-
-      if (completeForm.file) {
-        fileData = await fileToBase64(completeForm.file);
-        fileName = completeForm.file.name;
-        fileType = completeForm.file.type;
-      }
+      const fileData = completeForm.fileData || '';
+      const fileName = completeForm.fileName || '';
+      const fileType = completeForm.fileType || '';
 
       // 設定結案資料
       const completedInfo = {
@@ -1082,16 +1270,7 @@ const EngineeringPage = () => {
                                 {phase.startDate} ~ {phase.endDate}
                               </span>
                             </div>
-                            {phase.fileUrl && (
-                              <a
-                                href={phase.fileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ color: 'var(--primary-color)', fontSize: '0.75rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '2px' }}
-                              >
-                                <FileText size={12} /> 下載檔案
-                              </a>
-                            )}
+                            {renderFileAttachment(phase.fileUrl, phase.fileType)}
                           </div>
                           {phase.notes && (
                             <div style={{ color: '#64748b', fontStyle: 'italic', marginTop: '2px', borderLeft: '2px solid #cbd5e1', paddingLeft: '8px' }}>
@@ -1116,22 +1295,7 @@ const EngineeringPage = () => {
                           備註：{project.completedInfo.notes}
                         </div>
                       )}
-                      {project.completedInfo.fileUrl && (
-                        <div style={{ marginTop: '8px' }}>
-                          <a
-                            href={project.completedInfo.fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn"
-                            style={{
-                              padding: '4px 10px', fontSize: '0.75rem', backgroundColor: '#166534', color: 'white',
-                              border: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none'
-                            }}
-                          >
-                            <FileText size={12} /> 檢視竣工附件
-                          </a>
-                        </div>
-                      )}
+                      {renderFileAttachment(project.completedInfo.fileUrl, project.completedInfo.fileType)}
                     </div>
                   )}
                 </div>
@@ -1194,6 +1358,30 @@ const EngineeringPage = () => {
               />
             </div>
           </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: '600' }}>上傳合約 / 施工圖檔案</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <input
+                type="file"
+                id="add-file-upload"
+                accept=".jpg,.jpeg,.png,.pdf"
+                onChange={handleAddFileChange}
+                style={{ display: 'none' }}
+              />
+              <label htmlFor="add-file-upload" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', margin: 0 }}>
+                <Upload size={16} /> 選擇檔案
+              </label>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                {addForm.file ? addForm.file.name : '未選擇任何檔案'}
+              </span>
+            </div>
+            {addPreview && (
+              <div style={{ marginTop: '12px', textAlign: 'left' }}>
+                <p style={{ fontSize: '0.8rem', color: '#666', margin: '0 0 4px 0' }}>圖片預覽 (已壓縮):</p>
+                <img src={addPreview} alt="Preview" style={{ maxHeight: '150px', borderRadius: '8px', border: '1px solid #eee' }} />
+              </div>
+            )}
+          </div>
 
           {/* 負責窗口與聯絡電話 */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -1254,23 +1442,7 @@ const EngineeringPage = () => {
             />
           </div>
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: '600' }}>上傳合約 / 施工圖檔案</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <input
-                type="file"
-                id="add-file-upload"
-                onChange={e => setAddForm({ ...addForm, file: e.target.files[0] })}
-                style={{ display: 'none' }}
-              />
-              <label htmlFor="add-file-upload" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', margin: 0 }}>
-                <Upload size={16} /> 選擇檔案
-              </label>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                {addForm.file ? addForm.file.name : '未選擇任何檔案'}
-              </span>
-            </div>
-          </div>
+
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
             <button type="button" onClick={() => setIsAddModalOpen(false)} className="btn btn-secondary">取消</button>
@@ -1340,7 +1512,8 @@ const EngineeringPage = () => {
               <input
                 type="file"
                 id="edit-file-upload"
-                onChange={e => setEditForm({ ...editForm, file: e.target.files[0] })}
+                accept=".jpg,.jpeg,.png,.pdf"
+                onChange={handleEditFileChange}
                 style={{ display: 'none' }}
               />
               <label htmlFor="edit-file-upload" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', margin: 0 }}>
@@ -1350,6 +1523,12 @@ const EngineeringPage = () => {
                 {editForm.file ? editForm.file.name : '未選擇任何檔案'}
               </span>
             </div>
+            {editPreview && (
+              <div style={{ marginTop: '12px', textAlign: 'left' }}>
+                <p style={{ fontSize: '0.8rem', color: '#666', margin: '0 0 4px 0' }}>圖片預覽 (已壓縮):</p>
+                <img src={editPreview} alt="Preview" style={{ maxHeight: '150px', borderRadius: '8px', border: '1px solid #eee' }} />
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
@@ -1408,7 +1587,8 @@ const EngineeringPage = () => {
               <input
                 type="file"
                 id="complete-file-upload"
-                onChange={e => setCompleteForm({ ...completeForm, file: e.target.files[0] })}
+                accept=".jpg,.jpeg,.png,.pdf"
+                onChange={handleCompleteFileChange}
                 style={{ display: 'none' }}
               />
               <label htmlFor="complete-file-upload" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', margin: 0 }}>
@@ -1418,6 +1598,12 @@ const EngineeringPage = () => {
                 {completeForm.file ? completeForm.file.name : '未選擇任何檔案'}
               </span>
             </div>
+            {completePreview && (
+              <div style={{ marginTop: '12px', textAlign: 'left' }}>
+                <p style={{ fontSize: '0.8rem', color: '#666', margin: '0 0 4px 0' }}>圖片預覽 (已壓縮):</p>
+                <img src={completePreview} alt="Preview" style={{ maxHeight: '150px', borderRadius: '8px', border: '1px solid #eee' }} />
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>

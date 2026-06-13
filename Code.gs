@@ -110,7 +110,17 @@ function handleGetAction(action, params) {
           if (b.category === '公告') stats.notice++;
           else if (b.category === '活動') stats.activities++;
           else if (b.category === '會議') stats.meeting++;
-          else if (b.category === '工程' || b.category === '失物') stats.lostAndFound++;
+          else if (b.category === '工程' || b.category === '失物') {
+            // 工程進度：僅統計未完成/進行中的工程項目 (解析 content JSON 確保與列表頁邏輯完全一致)
+            let parsed = null;
+            try {
+              parsed = JSON.parse(b.content);
+            } catch(e) {}
+            const isCompleted = b.status === '已完成' || b.status === '已結案' || b.status === 'C' || (parsed && !!parsed.completedInfo);
+            if (!isCompleted) {
+              stats.lostAndFound++;
+            }
+          }
           else if (b.category === '其他') stats.others++;
           else if (b.category === 'QA') stats.qa++;
         }

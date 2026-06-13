@@ -94,12 +94,15 @@ const Home = () => {
           };
 
           // 過濾條件：公告必須在有效期間內 (開始時間 <= 現在, 且未結束)
+          // 【特別修正】工程類別不受有效時間限制，永遠視為有效，直到被手動軟刪除
           let isValid = true;
-          if (processedItem.validStart && processedItem.validStart > now) {
-            isValid = false; // 尚未開始
-          }
-          if (processedItem.validEnd && processedItem.validEnd < now) {
-            isValid = false; // 已經過期
+          if (normalizedCategory !== '工程') {
+            if (processedItem.validStart && processedItem.validStart > now) {
+              isValid = false; // 尚未開始
+            }
+            if (processedItem.validEnd && processedItem.validEnd < now) {
+              isValid = false; // 已經過期
+            }
           }
 
           if (isValid) {
@@ -122,7 +125,9 @@ const Home = () => {
 
 
 
-        setBulletins(validList);
+        // 首頁的最新公告列表需排除工程類別資料，避免將工程項目顯示在一般公告列表中
+        const homeBulletins = validList.filter(item => item.category !== '工程');
+        setBulletins(homeBulletins);
 
         // --- 修正：依據「目前顯示清單 (validList)」重新計算統計筆數 (Stats) ---
         // 確保數字與下方列表完全同步，且符合「今日有效」的過濾規則
@@ -133,7 +138,17 @@ const Home = () => {
           if (item.category === '公告') newStats.notice++;
           else if (item.category === '活動') newStats.activities++;
           else if (item.category === '會議') newStats.meeting++;
-          else if (item.category === '工程') newStats.lostAndFound++;
+          else if (item.category === '工程') {
+            // 工程進度：僅統計未完成/進行中的工程項目 (解析 content JSON 確保與列表頁邏輯完全一致)
+            let parsed = null;
+            try {
+              parsed = JSON.parse(item.content);
+            } catch (e) {}
+            const isCompleted = item.status === '已完成' || item.status === '已結案' || item.status === 'C' || !!parsed?.completedInfo;
+            if (!isCompleted) {
+              newStats.lostAndFound++;
+            }
+          }
           else if (item.category === '其他') newStats.others++;
           else if (item.category === 'Q&A') newStats.qa++;
         }

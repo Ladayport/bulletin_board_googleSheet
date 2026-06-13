@@ -51,6 +51,19 @@ const AdminDashboard = () => {
                         </div>
                     </div>
                 </Card>
+
+                {/* 功能卡片 3: 新增工程項目 */}
+                <Card onClick={() => navigate('/category/engineering?openAdd=true')} className="interactive">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ background: '#dcfce7', padding: '16px', borderRadius: '50%', color: '#10b981' }}>
+                            <PlusCircle size={40} />
+                        </div>
+                        <div>
+                            <h3>新增工程項目</h3>
+                            <p style={{ color: 'var(--text-muted)' }}>建立新的工程進度追蹤與工期項目</p>
+                        </div>
+                    </div>
+                </Card>
             </div>
         </div>
     );
