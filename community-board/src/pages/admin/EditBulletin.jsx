@@ -54,7 +54,7 @@ const EditBulletin = () => {
                             category: (bulletin.category === '公告通知' ? '公告' :
                                 bulletin.category === '活動通知' ? '活動' :
                                     bulletin.category === '會議通知' || bulletin.category === '會議紀錄' ? '會議' :
-                                        bulletin.category === '失物招領' ? '失物' :
+                                        bulletin.category === '失物招領' || bulletin.category === '失物' ? '工程' :
                                             bulletin.category === '其他通知' || bulletin.category === '其他項目' ? '其他' : bulletin.category) || '公告',
                             content: bulletin.content || '',
                             isEmergency: bulletin.isUrgent === 'Y',
@@ -223,7 +223,7 @@ const EditBulletin = () => {
                             <option value="公告">公告</option>
                             <option value="活動">活動</option>
                             <option value="會議">會議</option>
-                            <option value="失物">失物</option>
+                            <option value="工程">工程</option>
                             <option value="其他">其他</option>
                             {/* 存檔值: "Q&A", 顯示: "Q&A" */}
                             <option value="Q&A">Q&A</option>

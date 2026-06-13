@@ -66,7 +66,7 @@ function handleGetAction(action, params) {
             id: r[0],
             title: r[1],
             content: r[2],
-            category: r[3],
+            category: (r[3] === '失物' || r[3] === '失物招領') ? '工程' : r[3],
             startDate: formatDate(r[4]),
             startTime: formatTime(r[5]),
             endDate: formatDate(r[6]),
@@ -110,7 +110,7 @@ function handleGetAction(action, params) {
           if (b.category === '公告') stats.notice++;
           else if (b.category === '活動') stats.activities++;
           else if (b.category === '會議') stats.meeting++;
-          else if (b.category === '失物') stats.lostAndFound++;
+          else if (b.category === '工程' || b.category === '失物') stats.lostAndFound++;
           else if (b.category === '其他') stats.others++;
           else if (b.category === 'QA') stats.qa++;
         }
@@ -123,7 +123,13 @@ function handleGetAction(action, params) {
         const catRows = catSheet.getDataRange().getValues();
         catRows.shift();
         for (let m = 0; m < catRows.length; m++) {
-          categories.push({ code: catRows[m][0], name: catRows[m][1] });
+          let code = catRows[m][0];
+          let name = catRows[m][1];
+          if (code === '失物' || code === '失物招領') {
+            code = '工程';
+            name = '工程';
+          }
+          categories.push({ code: code, name: name });
         }
       }
 
@@ -147,7 +153,9 @@ function handleGetAction(action, params) {
         const row = filterRows[n];
         
         // 條件 1: 檢查類別是否符合
-        if (row[3] !== category) continue;
+        let sheetCat = row[3];
+        if (sheetCat === '失物' || sheetCat === '失物招領') sheetCat = '工程';
+        if (sheetCat !== category) continue;
         
         // 條件 3: 檢查日期是否在範圍內
         const bDate = formatDate(row[4]); // "YYYY/MM/DD"
@@ -229,6 +237,11 @@ function handlePostAction(action, data) {
         fileUrl = saveFileToDrive(data.fileData, data.fileName, data.fileType);
       }
 
+      let finalContent = data.content;
+      if (fileUrl && finalContent) {
+        finalContent = finalContent.replace(/\[LATEST_UPLOAD_URL\]/g, fileUrl);
+      }
+
       // 處理開始與結束日期時間
       const startDateTime = new Date(data.startDate);
       const endDateTime = new Date(data.endDate);
@@ -236,7 +249,7 @@ function handlePostAction(action, data) {
       sheet.appendRow([
         newId, 
         data.title, 
-        data.content, 
+        finalContent, 
         data.category,
         formatDate(startDateTime), 
         formatTime(startDateTime),
@@ -245,7 +258,7 @@ function handlePostAction(action, data) {
         data.isUrgent || '', 
         fileUrl, 
         data.fileType,
-        '' // 狀態
+        data.status || '' // 狀態
       ]);
 
       writeLog(ss, data.operator || 'Admin', `新增公告: ${data.title}`);
@@ -310,9 +323,14 @@ function updateBulletin(ss, data, isDelete) {
        newFileUrl = saveFileToDrive(data.fileData, data.fileName, data.fileType);
     }
 
+    let finalContent = data.content;
+    if (newFileUrl && finalContent) {
+      finalContent = finalContent.replace(/\[LATEST_UPLOAD_URL\]/g, newFileUrl);
+    }
+
     // 更新資料列
     sheet.getRange(actualRow, 2).setValue(data.title);
-    sheet.getRange(actualRow, 3).setValue(data.content);
+    sheet.getRange(actualRow, 3).setValue(finalContent);
     sheet.getRange(actualRow, 4).setValue(data.category);
     
     // 處理日期與時間更新
@@ -334,6 +352,7 @@ function updateBulletin(ss, data, isDelete) {
     sheet.getRange(actualRow, 9).setValue(data.isUrgent || '');
     sheet.getRange(actualRow, 10).setValue(newFileUrl);
     sheet.getRange(actualRow, 11).setValue(data.fileType);
+    sheet.getRange(actualRow, 12).setValue(data.status || '');
 
     // 建立變更記錄字串
     const changes = [];

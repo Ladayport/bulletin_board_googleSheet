@@ -150,7 +150,7 @@ const AddAnnouncement = () => {
               <option value="公告">公告</option>
               <option value="活動">活動</option>
               <option value="會議">會議</option>
-              <option value="失物">失物</option>
+              <option value="工程">工程</option>
               <option value="其他">其他</option>
               {/* 存檔值: "Q&A", 顯示: "Q&A" */}
               <option value="Q&A">Q&A</option>

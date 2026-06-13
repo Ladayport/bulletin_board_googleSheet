@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import CategoryPage from './pages/CategoryPage';
+import EngineeringPage from './pages/EngineeringPage';
 import ScrollToTop from './components/ui/ScrollToTop';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AddAnnouncement from './pages/admin/AddAnnouncement';
@@ -26,6 +27,8 @@ function App() {
                     {/* 公開頁面 */}
                     <Route path="/" element={<Home />} />
                     <Route path="/login" element={<Login />} />
+                    <Route path="/category/lost-found" element={<EngineeringPage />} />
+                    <Route path="/category/engineering" element={<EngineeringPage />} />
                     <Route path="/category/:type" element={<CategoryPage />} />
 
                     {/* 後台保護區域 */}

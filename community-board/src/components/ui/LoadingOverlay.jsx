@@ -1,8 +1,9 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 /**
  * LoadingOverlay 元件
- * 提供全螢幕的載入遮罩，並阻擋使用者操作
+ * 提供全螢幕的載入遮罩，並阻擋使用者操作 (採用 Portal 掛載以解決 Stacking Context 遮擋問題)
  */
 const LoadingOverlay = ({
     show,
@@ -10,7 +11,7 @@ const LoadingOverlay = ({
 }) => {
     if (!show) return null;
 
-    return (
+    return createPortal(
         <div style={{
             position: 'fixed',
             top: 0,
@@ -23,7 +24,7 @@ const LoadingOverlay = ({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 9999,
+            zIndex: 99999, // 提高 zIndex 確保在最上層
             transition: 'opacity 0.3s ease-in-out'
         }}>
             {/* 旋轉載入圖示 */}
@@ -53,7 +54,8 @@ const LoadingOverlay = ({
           100% { transform: rotate(360deg); }
         }
       `}</style>
-        </div>
+        </div>,
+        document.body
     );
 };
 

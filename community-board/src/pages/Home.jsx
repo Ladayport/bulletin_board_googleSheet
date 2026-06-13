@@ -59,7 +59,8 @@ const Home = () => {
           '公告': '公告',
           '活動': '活動',
           '會議': '會議',
-          '失物': '失物',
+          '工程': '工程',
+          '失物': '工程',
           '其他': '其他',
           // 存檔值可能為 "QA", "Q&A", "問答"，統一顯示為 "Q&A"
           'QA': 'Q&A', 'Q&A': 'Q&A', '問答': 'Q&A'
@@ -132,7 +133,7 @@ const Home = () => {
           if (item.category === '公告') newStats.notice++;
           else if (item.category === '活動') newStats.activities++;
           else if (item.category === '會議') newStats.meeting++;
-          else if (item.category === '失物') newStats.lostAndFound++;
+          else if (item.category === '工程') newStats.lostAndFound++;
           else if (item.category === '其他') newStats.others++;
           else if (item.category === 'Q&A') newStats.qa++;
         }

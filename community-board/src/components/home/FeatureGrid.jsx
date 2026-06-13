@@ -3,7 +3,7 @@ import {
     Bell,         // 公告
     Calendar,     // 活動
     Users,        // 會議
-    Search,       // 失物
+    Wrench,       // 工程進度
     MoreHorizontal, // 其他
     HelpCircle    // QA
 } from 'lucide-react';
@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 const FeatureGrid = ({ stats }) => {
     const navigate = useNavigate();
 
-    // 排序: 1.公告 2.活動 3.會議 4.失物 5.其他 6.Q&A
+    // 排序: 1.公告 2.活動 3.會議 4.工程進度 5.其他 6.Q&A
     const features = [
         {
             id: 'notice',
@@ -36,11 +36,11 @@ const FeatureGrid = ({ stats }) => {
             bgColor: '#f59e0b' // 黃/橘
         },
         {
-            id: 'lost-found',
-            title: '失物招領',
+            id: 'engineering',
+            title: '工程進度',
             count: stats.lostAndFound || 0,
-            icon: <Search size={32} color="#FFFFFF" />,
-            bgColor: '#ef4444' // 紅
+            icon: <Wrench size={32} color="#FFFFFF" />,
+            bgColor: '#f97316' // 亮橘/工程色
         },
         {
             id: 'others',

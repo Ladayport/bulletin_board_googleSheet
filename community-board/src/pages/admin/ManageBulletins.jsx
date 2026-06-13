@@ -11,7 +11,7 @@ const ManageBulletins = () => {
         { code: '公告', name: '公告' },
         { code: '活動', name: '活動' },
         { code: '會議', name: '會議' },
-        { code: '失物', name: '失物' },
+        { code: '工程', name: '工程' },
         { code: '其他', name: '其他' },
         { code: 'QA', name: 'QA' }
     ]);
