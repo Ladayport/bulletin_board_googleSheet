@@ -21,6 +21,7 @@ const CategoryPage = () => {
     const [bulletins, setBulletins] = useState([]); // 經日期過濾後的公告清單
     const [loading, setLoading] = useState(true);
     const [siteTitle, setSiteTitle] = useState(mockSiteData.title);
+    const [searchQuery, setSearchQuery] = useState('');
 
     /**
      * 輔助功能：計算預設日期範圍 (20天前 ~ 60天後)
@@ -45,7 +46,6 @@ const CategoryPage = () => {
         { id: 'notice', label: '公告' },
         { id: 'activities', label: '活動' },
         { id: 'meeting', label: '會議' },
-        { id: 'lost-found', label: '失物' },
         { id: 'others', label: '其他' },
         { id: 'qa', label: 'Q&A' }
     ];
@@ -63,6 +63,7 @@ const CategoryPage = () => {
             }
         }
         setActiveTab(matchedLabel);
+        setSearchQuery(''); // 切換分頁時清除搜尋關鍵字
     }, [type]);
 
     // 初始載入資料
@@ -165,13 +166,22 @@ const CategoryPage = () => {
         }
     };
 
-    // --- 顯示過濾 ---
-    // 依據目前選中的 Tab 篩選出要顯示的內容 (陣列已在 fetchData 中排好序)
+    // --- 顯示過濾與即時搜尋 ---
+    // 依據目前選中的 Tab 與搜尋關鍵字過濾內容 (陣列已在 fetchData 中排好序)
     const displayBulletins = [];
     for (let k = 0; k < bulletins.length; k++) {
         const item = bulletins[k];
         if (item.category === activeTab) {
-            displayBulletins.push(item);
+            const query = searchQuery.trim().toLowerCase();
+            if (!query) {
+                displayBulletins.push(item);
+            } else {
+                const matchesTitle = item.title?.toLowerCase().includes(query);
+                const matchesContent = item.content?.toLowerCase().includes(query);
+                if (matchesTitle || matchesContent) {
+                    displayBulletins.push(item);
+                }
+            }
         }
     }
 
@@ -213,41 +223,80 @@ const CategoryPage = () => {
                     </div>
                 </div>
 
-                {/* 日期過濾工具列 */}
+                {/* 日期過濾與搜尋工具列 */}
                 <section style={{
                     marginBottom: '24px', padding: '16px', backgroundColor: 'var(--bg-card)',
                     borderRadius: '8px', border: '1px solid #e5e7eb'
                 }}>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <label style={{ fontSize: '0.9rem', fontWeight: '500' }}>日期範圍：</label>
-                        <input
-                            type="date"
-                            value={dateFilter.startDate}
-                            onChange={e => setDateFilter({ ...dateFilter, startDate: e.target.value })}
-                            style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '0.9rem' }}
-                        />
-                        <span style={{ color: 'var(--text-muted)' }}>~</span>
-                        <input
-                            type="date"
-                            value={dateFilter.endDate}
-                            onChange={e => setDateFilter({ ...dateFilter, endDate: e.target.value })}
-                            style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '0.9rem' }}
-                        />
-                        <button
-                            onClick={() => fetchData()}
-                            className="btn btn-primary"
-                            style={{ padding: '8px 16px', fontSize: '0.9rem' }}
-                        >
-                            查詢
-                        </button>
-                        {/* 筆數統計：只在載入完成後顯示 */}
-                        <span style={{ marginLeft: 'auto', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                            {!loading && `${activeTab} 共 ${displayBulletins.length} 筆`}
-                        </span>
+                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                        {/* 日期範圍過濾 */}
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                            <label style={{ fontSize: '0.9rem', fontWeight: '500' }}>日期範圍：</label>
+                            <input
+                                type="date"
+                                value={dateFilter.startDate}
+                                onChange={e => setDateFilter({ ...dateFilter, startDate: e.target.value })}
+                                style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '0.9rem' }}
+                            />
+                            <span style={{ color: 'var(--text-muted)' }}>~</span>
+                            <input
+                                type="date"
+                                value={dateFilter.endDate}
+                                onChange={e => setDateFilter({ ...dateFilter, endDate: e.target.value })}
+                                style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '0.9rem' }}
+                            />
+                            <button
+                                onClick={() => fetchData()}
+                                className="btn btn-primary"
+                                style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+                            >
+                                查詢
+                            </button>
+                        </div>
+
+                        {/* 搜尋關鍵字輸入框 */}
+                        <div style={{ position: 'relative', width: '280px', maxWidth: '100%', boxSizing: 'border-box' }}>
+                            <input
+                                type="text"
+                                placeholder={`在${activeTab}中搜尋標題或內容...`}
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '8px 12px 8px 36px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #ddd',
+                                    fontSize: '0.9rem',
+                                    boxSizing: 'border-box'
+                                }}
+                            />
+                            <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                width="16" 
+                                height="16" 
+                                viewBox="0 0 24 24" 
+                                fill="none" 
+                                stroke="#94a3b8" 
+                                strokeWidth="2" 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round" 
+                                style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
+                            >
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </div>
                     </div>
                 </section>
 
-                <h2 style={{ marginBottom: '24px', color: 'var(--text-main)' }}>{activeTab}</h2>
+                <h2 style={{ marginBottom: '24px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>{activeTab}</span>
+                    {!loading && (
+                        <span style={{ fontSize: '0.95rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>
+                            此區間共 {displayBulletins.length} 筆
+                        </span>
+                    )}
+                </h2>
 
                 {/* 公告內容區 */}
                 {displayBulletins.length > 0 ? (

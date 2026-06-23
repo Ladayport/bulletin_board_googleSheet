@@ -64,7 +64,7 @@ const Login = () => {
                         <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>帳號</label>
                         <input
                             type="text"
-                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ccc' }}
+                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ccc', boxSizing: 'border-box' }}
                             value={formData.username}
                             onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                             required
@@ -74,7 +74,7 @@ const Login = () => {
                         <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>密碼</label>
                         <input
                             type="password"
-                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ccc' }}
+                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ccc', boxSizing: 'border-box' }}
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                             required
