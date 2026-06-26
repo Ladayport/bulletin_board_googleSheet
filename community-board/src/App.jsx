@@ -18,6 +18,15 @@ import InquiryViewPage from './pages/InquiryViewPage';
 import PrivateRoute from './components/layout/PrivateRoute';
 import Footer from './components/layout/Footer';
 
+// 新增功能建議版型頁面
+import RepairPage from './pages/RepairPage';
+import DownloadPage from './pages/DownloadPage';
+import ForumPage from './pages/ForumPage';
+import GasPage from './pages/GasPage';
+import BookingPage from './pages/BookingPage';
+import PackagePage from './pages/PackagePage';
+import VisitorPage from './pages/VisitorPage';
+
 function App() {
     return (
         <Router future={{
@@ -39,6 +48,16 @@ function App() {
                     <Route path="/category/engineering/board" element={<EngineeringPage />} />
                     <Route path="/category/engineering/:id" element={<EngineeringDetail />} />
                     <Route path="/engineering/inquiries" element={<InquiryViewPage />} />
+                    
+                    {/* 新增的卡片對應路由 */}
+                    <Route path="/repair" element={<RepairPage />} />
+                    <Route path="/download" element={<DownloadPage />} />
+                    <Route path="/forum" element={<ForumPage />} />
+                    <Route path="/gas" element={<GasPage />} />
+                    <Route path="/booking" element={<BookingPage />} />
+                    <Route path="/package" element={<PackagePage />} />
+                    <Route path="/visitor" element={<VisitorPage />} />
+
                     <Route path="/category/:type" element={<CategoryPage />} />
 
                     {/* 後台保護區域 */}
