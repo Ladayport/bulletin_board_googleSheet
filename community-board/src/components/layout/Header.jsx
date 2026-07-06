@@ -37,18 +37,35 @@ const Header = ({ title }) => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 {isAuthenticated ? (
                     <>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            backgroundColor: '#f1f5f9',
-                            padding: '6px 12px',
-                            borderRadius: '20px',
-                            fontSize: '0.85rem',
-                            fontWeight: '600',
-                            color: '#334155',
-                            border: '1px solid #e2e8f0'
-                        }}>
+                        <Link
+                            to="/admin"
+                            title="進入管理後台"
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                backgroundColor: '#f1f5f9',
+                                padding: '6px 12px',
+                                borderRadius: '20px',
+                                fontSize: '0.85rem',
+                                fontWeight: '600',
+                                color: '#334155',
+                                border: '1px solid #e2e8f0',
+                                textDecoration: 'none',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease-in-out'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = '#e2e8f0';
+                                e.currentTarget.style.transform = 'translateY(-1px)';
+                                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = '#f1f5f9';
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = 'none';
+                            }}
+                        >
                             <User size={16} style={{ color: 'var(--primary-color)' }} />
                             <span>{user?.name || user?.username || '管理員'}</span>
                             <span style={{ 
@@ -60,7 +77,7 @@ const Header = ({ title }) => {
                             }}>
                                 已登入
                             </span>
-                        </div>
+                        </Link>
                         <button
                             onClick={handleLogout}
                             className="btn-icon"
