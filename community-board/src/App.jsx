@@ -48,7 +48,7 @@ function App() {
                     <Route path="/category/engineering/board" element={<EngineeringPage />} />
                     <Route path="/category/engineering/:id" element={<EngineeringDetail />} />
                     <Route path="/engineering/inquiries" element={<InquiryViewPage />} />
-                    
+
                     {/* 新增的卡片對應路由 */}
                     <Route path="/repair" element={<RepairPage />} />
                     <Route path="/download" element={<DownloadPage />} />
@@ -61,7 +61,7 @@ function App() {
                     <Route path="/category/:type" element={<CategoryPage />} />
 
                     {/* 後台保護區域 (暫時調降權限為 1，讓一般帳號也能進入新增公告) */}
-                    <Route element={<PrivateRoute requiredLevel={1} />}>
+                    <Route element={<PrivateRoute requiredLevel={50} />}>
                         <Route path="/admin" element={<AdminDashboard />} />
                         <Route path="/admin/add" element={<AddAnnouncement />} />
                         <Route path="/admin/manage" element={<ManageBulletins />} />
