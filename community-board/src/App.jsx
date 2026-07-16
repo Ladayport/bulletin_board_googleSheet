@@ -1,5 +1,5 @@
 // src/App.jsx
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -32,7 +32,7 @@ function App() {
         <Router future={{
             v7_startTransition: true,
             v7_relativeSplatPath: true
-        }} basename="/bulletin_board_googleSheet">
+        }}>
             <ScrollToTop />
 
             {/* 內容區域用 div 包裹以確保 Footer 被推到最底 (Sticky Footer 結構可選) */}

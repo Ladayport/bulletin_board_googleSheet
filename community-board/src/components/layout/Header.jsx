@@ -17,8 +17,7 @@ const Header = ({ title }) => {
         authService.logout();
         setUser(null);
         setIsAuthenticated(false);
-        // 直接實體重導向至含有 Base URL 的首頁路徑，以防重新整理時掉出子路徑
-        window.location.href = '/bulletin_board_googleSheet/';
+        navigate('/', { replace: true });
     };
 
     return (
