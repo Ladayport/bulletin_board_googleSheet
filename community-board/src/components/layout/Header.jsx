@@ -38,8 +38,8 @@ const Header = ({ title }) => {
                 {isAuthenticated ? (
                     <>
                         <Link
-                            to="/admin"
-                            title="進入管理後台"
+                            to={authService.getUserLevel() >= 99 ? "/admin" : "/repair"}
+                            title={authService.getUserLevel() >= 99 ? "進入管理後台" : "進入報修管理"}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -67,7 +67,7 @@ const Header = ({ title }) => {
                             }}
                         >
                             <User size={16} style={{ color: 'var(--primary-color)' }} />
-                            <span>{user?.name || user?.username || '管理員'}</span>
+                            <span>{user?.name || user?.username || '使用者'}</span>
                             <span style={{ 
                                 padding: '2px 6px', 
                                 backgroundColor: 'var(--primary-color)', 
