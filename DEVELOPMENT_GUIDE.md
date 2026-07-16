@@ -130,3 +130,32 @@ const response = await fetch(GAS_URL, {
 | **訪客登記** | `/visitor` | `src/pages/VisitorPage.jsx` | 玫瑰粉至珊瑚橘 (`#f43f5e` ➜ `#f97316`) |
 | **下載區** | `/download` | `src/pages/DownloadPage.jsx` | 經典藍至深寶藍 (`#3b82f6` ➜ `#1d4ed8`) |
 | **討論區** | `/forum` | `src/pages/ForumPage.jsx` | 科技暗色系背景 + 磨砂玻璃 (Glassmorphism) |
+
+---
+
+## 7. 多單位部署與環境變數指南 (Multi-tenant Deployment)
+
+為了達到「同一個程式碼基底 (Codebase)，但產生三組不同網址與資料來源的獨立網站」的目標，本專案採用 **Vite 的環境變數切換 (`--mode`)** 與 **多資料夾打包 (Subdirectory Build)** 策略。
+
+### A. 環境變數檔案
+專案根目錄 (community-board) 下有三個隱藏的設定檔，用來分別指向三個不同的 Google Apps Script (GAS) 網址：
+1. **`.env.testing`**: 測試區專用，打包時讀取此檔內的 `VITE_GAS_URL`。
+2. **`.env.unitA`**: 單位 A 專用，請在此設定單位 A 的 `VITE_GAS_URL`。
+3. **`.env.unitB`**: 單位 B 專用，請在此設定單位 B 的 `VITE_GAS_URL`。
+
+> ⚠️ **注意**：實際的 API 呼叫在 `src/services/api.js` 中都會統一讀取 `import.meta.env.VITE_GAS_URL`，因此三個環境檔內的變數名稱都必須是 `VITE_GAS_URL`，Vite 會在編譯時根據執行的腳本自動替換為正確的網址，程式碼完全不需要修改。
+
+### B. 打包與部署指令
+我們將打包流程封裝在 `package.json` 與 `deploy.js` 腳本中。
+你可以透過終端機執行以下指令：
+
+*   **`npm run deploy:all` (推薦)**：自動依序執行測試區、單位 A、單位 B 的打包，然後將整個 `dist` 目錄推送到 `gh-pages` 分支。
+*   `npm run build:testing`：僅單獨打包測試區 (輸出至 `dist/`)。
+*   `npm run build:unitA`：僅單獨打包單位 A (輸出至 `dist/nexus-alpha/`)。
+*   `npm run build:unitB`：僅單獨打包單位 B (輸出至 `dist/nexus-omega/`)。
+
+### C. 部署後的專屬網址
+透過 `deploy:all` 成功發布到 GitHub Pages 後，各單位的網址區隔如下（具備辨識度且不易被輕易猜出）：
+*   **測試區**: `https://ladayport.github.io/bulletin_board_googleSheet/`
+*   **單位 A (正式區)**: `https://ladayport.github.io/bulletin_board_googleSheet/nexus-alpha/`
+*   **單位 B (正式區)**: `https://ladayport.github.io/bulletin_board_googleSheet/nexus-omega/`

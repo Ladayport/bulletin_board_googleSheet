@@ -6,11 +6,12 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build",
+        "build:testing": "vite build --mode testing",
+        "build:unitA": "vite build --mode unitA --base=/bulletin_board_googleSheet/nexus-alpha/ --outDir dist/nexus-alpha",
+        "build:unitB": "vite build --mode unitB --base=/bulletin_board_googleSheet/nexus-omega/ --outDir dist/nexus-omega",
         "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
         "preview": "vite preview",
-        "predeploy": "npm run build",
-        "deploy": "gh-pages -d dist"
+        "deploy:all": "node deploy.js"
     },
     "dependencies": {
         "date-fns": "^2.30.0",
