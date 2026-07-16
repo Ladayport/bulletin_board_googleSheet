@@ -60,8 +60,8 @@ function App() {
 
                     <Route path="/category/:type" element={<CategoryPage />} />
 
-                    {/* 後台保護區域 */}
-                    <Route element={<PrivateRoute requiredLevel={99} />}>
+                    {/* 後台保護區域 (暫時調降權限為 1，讓一般帳號也能進入新增公告) */}
+                    <Route element={<PrivateRoute requiredLevel={1} />}>
                         <Route path="/admin" element={<AdminDashboard />} />
                         <Route path="/admin/add" element={<AddAnnouncement />} />
                         <Route path="/admin/manage" element={<ManageBulletins />} />
