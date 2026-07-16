@@ -38,8 +38,8 @@ const Header = ({ title }) => {
                 {isAuthenticated ? (
                     <>
                         <Link
-                            to={authService.getUserLevel() >= 99 ? "/admin" : "/repair"}
-                            title={authService.getUserLevel() >= 99 ? "進入管理後台" : "進入報修管理"}
+                            to="/admin"
+                            title="進入管理後台"
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
