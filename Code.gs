@@ -228,6 +228,112 @@ function handleGetAction(action, params) {
       // 倒序排列，讓最新發起的在前面
       return { success: true, inquiries: inquiries.reverse() };
 
+    case 'getRepairTickets':
+      const ssRepair = SpreadsheetApp.openById(SHEET_ID);
+      const repSheet = getOrCreateRepairSheet(ssRepair);
+      const repRows = repSheet.getDataRange().getValues();
+      repRows.shift(); // 移除標題列
+      
+      const reqUsername = params.username || '';
+      const uLevel = getUserLevel(ssRepair, reqUsername);
+      
+      const tickets = [];
+      for (let i = 0; i < repRows.length; i++) {
+        const row = repRows[i];
+        const ticketId = row[0].toString();
+        const category = row[1];
+        let location = row[2];
+        const description = row[3];
+        let reporter = row[4];
+        let phone = row[5].toString();
+        let email = row[6];
+        const status = row[7] || '待處理';
+        const date = formatDate(row[8]);
+        const createdTime = row[9] ? row[9].toString() : '';
+        const operator = row[10];
+        const validStatus = row[11] || '';
+        
+        // 軟刪除過濾
+        if (validStatus === 'D') continue;
+        
+        // 個資去識別化邏輯
+        if (uLevel < 99) {
+          // 姓名遮蔽
+          if (reporter && reporter.length > 0) {
+            reporter = reporter.substring(0, 1) + '**';
+          }
+          // 電話遮蔽
+          if (phone && phone.length > 0) {
+            if (phone.length >= 7) {
+              phone = phone.substring(0, 4) + '***' + phone.substring(phone.length - 3);
+            } else {
+              phone = '***';
+            }
+          }
+          // Email 遮蔽
+          if (email && email.indexOf('@') !== -1) {
+            const parts = email.split('@');
+            if (parts[0].length > 3) {
+              email = parts[0].substring(0, 3) + '***@' + parts[1];
+            } else {
+              email = '***@' + parts[1];
+            }
+          } else {
+            email = '***';
+          }
+          // 地點遮蔽：若有「棟」，只保留到「棟」
+          if (location && location.indexOf('棟') !== -1) {
+            location = location.replace(/^([^棟]*棟)[\s\S]*/, '$1');
+          }
+        }
+        
+        tickets.push({
+          id: ticketId,
+          category: category,
+          location: location,
+          description: description,
+          reporter: reporter,
+          phone: phone,
+          email: email,
+          status: status,
+          date: date,
+          createdTime: createdTime,
+          operator: operator
+        });
+      }
+      
+      // 倒序，最新在前面
+      let resTickets = tickets.reverse();
+      
+      return { success: true, tickets: resTickets };
+
+    case 'getRepairLogs':
+      const ssLogs = SpreadsheetApp.openById(SHEET_ID);
+      const logsSheet = getOrCreateTicketLogsSheet(ssLogs);
+      const logRows = logsSheet.getDataRange().getValues();
+      logRows.shift();
+      
+      const tId = params.ticketId || '';
+      const logs = [];
+      
+      for (let i = 0; i < logRows.length; i++) {
+        const row = logRows[i];
+        if (row[1].toString() === tId.toString()) {
+          logs.push({
+            logId: row[0].toString(),
+            ticketId: row[1].toString(),
+            operator: row[2],
+            operatorLevel: parseInt(row[3] || '0', 10),
+            content: row[4],
+            statusChange: row[5] || '',
+            timestamp: row[6] ? row[6].toString() : ''
+          });
+        }
+      }
+      
+      // 依時間從最舊排到最新（符合時間軸順序）
+      return { success: true, logs: logs };
+
     default:
       return { success: false, message: 'Unknown action' };
   }
@@ -245,14 +351,32 @@ function handlePostAction(action, data) {
       if (!userSheet) return { success: false, message: '找不到 [帳號管理] 工作表' };
       
       const users = userSheet.getDataRange().getValues();
+      const header = users[0];
       users.shift();
+      
+      // 尋找 level 欄位索引
+      let levelIdx = -1;
+      for (let idx = 0; idx < header.length; idx++) {
+        const colName = header[idx].toString().toLowerCase();
+        if (colName === 'level' || colName === '權限層級' || colName === '層級') {
+          levelIdx = idx;
+          break;
+        }
+      }
       
       let authenticatedUser = null;
       // 遍歷所有使用者紀錄進行比對
       for (let i = 0; i < users.length; i++) {
         const u = users[i];
         if (u[0] == data.username && u[1] == data.password && u[6] == 'Y') {
-          authenticatedUser = { name: u[2], role: u[5] };
+          let level = 1; // 預設住戶等級
+          if (levelIdx !== -1 && u[levelIdx] !== undefined && u[levelIdx] !== '') {
+            level = parseInt(u[levelIdx], 10);
+          } else {
+            // 相容邏輯：若無 level 欄位，以角色 role 判斷
+            level = (u[5] === 'admin' || u[5] === '管理員') ? 99 : 1;
+          }
+          authenticatedUser = { name: u[2], role: u[5], level: level, username: u[0] };
           break;
         }
       }
@@ -432,6 +556,136 @@ function handlePostAction(action, data) {
       
       writeLog(ss, data.operator || 'Admin', `將詢價項目 ${data.id} 強制結案並隱藏`);
       return { success: true, message: '項目已強制結案並隱藏' };
+
+    case 'addRepairTicket':
+      const ssAddRep = SpreadsheetApp.openById(SHEET_ID);
+      const addUsername = data.username || '';
+      const addLevel = getUserLevel(ssAddRep, addUsername);
+      if (addLevel < 1) {
+        return { success: false, message: '權限不足，必須登入後才能報修' };
+      }
+      
+      const now = new Date();
+      const padNum = (num) => String(num).padStart(2, '0');
+      const yyyyVal = now.getFullYear();
+      const mmVal = padNum(now.getMonth() + 1);
+      const ddVal = padNum(now.getDate());
+      const hhVal = padNum(now.getHours());
+      const minVal = padNum(now.getMinutes());
+      const secVal = padNum(now.getSeconds());
+      
+      const ticketId = `REP${yyyyVal}${mmVal}${ddVal}${hhVal}${minVal}${secVal}`;
+      const repAddSheet = getOrCreateRepairSheet(ssAddRep);
+      
+      const dateStr = formatDate(now);
+      const timeStr = formatDate(now) + ' ' + formatTime(now);
+      
+      // 欄位：單號, 分類, 故障地點, 故障說明, 申報人, 聯絡電話, Email, 項目狀態, 發起日期, 建立時間, 更新人員, 有效狀態
+      repAddSheet.appendRow([
+        ticketId,
+        data.category || '',
+        data.location || '',
+        data.description || '',
+        data.reporter || '',
+        data.phone || '',
+        data.email || '',
+        '待處理',
+        dateStr,
+        timeStr,
+        data.reporter || '',
+        ''
+      ]);
+      
+      // 同步寫入初始歷程
+      const logAddSheet = getOrCreateTicketLogsSheet(ssAddRep);
+      const logId = `LOG${yyyyVal}${mmVal}${ddVal}${hhVal}${minVal}${secVal}`;
+      
+      // 欄位：歷程ID, 單號, 操作人, 角色層級, 回覆內容, 狀態變更, 建立時間
+      logAddSheet.appendRow([
+        logId,
+        ticketId,
+        '系統',
+        '0',
+        `${data.description} (狀態：待處理)`,
+        '待處理',
+        timeStr
+      ]);
+      
+      writeLog(ssAddRep, data.reporter || '住戶', `新增報修單：${ticketId}`);
+      return { success: true, message: '報修單提交成功', ticketId: ticketId };
+
+    case 'addRepairLog':
+      const ssAddLog = SpreadsheetApp.openById(SHEET_ID);
+      const logUser = data.username || '';
+      const userLvl = getUserLevel(ssAddLog, logUser);
+      
+      if (userLvl < 1) {
+        return { success: false, message: '權限不足' };
+      }
+      
+      const targetTicketId = data.ticketId;
+      const statusChange = data.statusChange || '';
+      
+      if (statusChange && userLvl < 99) {
+        return { success: false, message: '只有管理員能變更案件狀態' };
+      }
+      
+      const repMainSheet = getOrCreateRepairSheet(ssAddLog);
+      const mainRows = repMainSheet.getDataRange().getValues();
+      let foundIndex = -1;
+      for (let i = 0; i < mainRows.length; i++) {
+        if (mainRows[i][0].toString() === targetTicketId.toString()) {
+          foundIndex = i;
+          break;
+        }
+      }
+      
+      if (foundIndex === -1) {
+        return { success: false, message: '找不到對應的報修單號：' + targetTicketId };
+      }
+      
+      const mainActualRow = foundIndex + 1;
+      const originalStatus = mainRows[foundIndex][7] || '待處理';
+      const reporterEmail = mainRows[foundIndex][6] || '';
+      
+      let finalStatus = originalStatus;
+      if (statusChange) {
+        finalStatus = statusChange;
+        repMainSheet.getRange(mainActualRow, 8).setValue(finalStatus);
+        repMainSheet.getRange(mainActualRow, 11).setValue(data.operatorName || '管理員');
+      }
+      
+      const nowLog = new Date();
+      const padNum2 = (num) => String(num).padStart(2, '0');
+      const timeLogStr = formatDate(nowLog) + ' ' + formatTime(nowLog);
+      const logIdVal = `LOG${nowLog.getFullYear()}${padNum2(nowLog.getMonth() + 1)}${padNum2(nowLog.getDate())}${padNum2(nowLog.getHours())}${padNum2(nowLog.getMinutes())}${padNum2(nowLog.getSeconds())}`;
+      
+      const logSheetVal = getOrCreateTicketLogsSheet(ssAddLog);
+      
+      // 欄位：歷程ID, 單號, 操作人, 角色層級, 回覆內容, 狀態變更, 建立時間
+      logSheetVal.appendRow([
+        logIdVal,
+        targetTicketId,
+        data.operatorName || (userLvl >= 99 ? '管理員' : '住戶'),
+        userLvl.toString(),
+        data.content || '',
+        statusChange || '',
+        timeLogStr
+      ]);
+      
+      writeLog(ssAddLog, data.operatorName || '系統', `報修單 ${targetTicketId} 歷程更新：${data.content || ''}`);
+      
+      if (statusChange && reporterEmail) {
+        const ticketInfo = {
+          id: targetTicketId,
+          category: mainRows[foundIndex][1],
+          location: mainRows[foundIndex][2],
+          email: reporterEmail
+        };
+        sendRepairNotificationEmail(ticketInfo, data.content || '無說明', statusChange);
+      }
+      
+      return { success: true, message: '更新成功' };
 
     default:
       return { success: false, message: 'Unknown POST action' };
@@ -619,4 +873,100 @@ function getOrCreateInquirySheet(ss) {
     ]);
   }
   return sheet;
+}
+
+/**
+ * 根據使用者名稱取得權限層級
+ */
+function getUserLevel(ss, username) {
+  if (!username) return 0;
+  const userSheet = ss.getSheetByName('帳號管理');
+  if (!userSheet) return 0;
+  const users = userSheet.getDataRange().getValues();
+  const header = users[0];
+  users.shift();
+  
+  let levelIdx = -1;
+  for (let idx = 0; idx < header.length; idx++) {
+    const colName = header[idx].toString().toLowerCase();
+    if (colName === 'level' || colName === '權限層級' || colName === '層級') {
+      levelIdx = idx;
+      break;
+    }
+  }
+  
+  for (let i = 0; i < users.length; i++) {
+    const u = users[i];
+    if (u[0] == username && u[6] == 'Y') {
+      if (levelIdx !== -1 && u[levelIdx] !== undefined && u[levelIdx] !== '') {
+        return parseInt(u[levelIdx], 10);
+      }
+      return (u[5] === 'admin' || u[5] === '管理員') ? 99 : 1;
+    }
+  }
+  return 0;
+}
+
+/**
+ * 安全取得或建立「報修資料」工作表
+ */
+function getOrCreateRepairSheet(ss) {
+  let sheet = ss.getSheetByName('報修資料');
+  if (!sheet) {
+    sheet = ss.insertSheet('報修資料');
+    // 欄位：單號, 分類, 故障地點, 故障說明, 申報人, 聯絡電話, Email, 項目狀態, 發起日期, 建立時間, 更新人員, 有效狀態
+    sheet.appendRow([
+      '單號',
+      '分類',
+      '故障地點',
+      '故障說明',
+      '申報人',
+      '聯絡電話',
+      'Email',
+      '項目狀態',
+      '發起日期',
+      '建立時間',
+      '更新人員',
+      '有效狀態'
+    ]);
+  }
+  return sheet;
+}
+
+/**
+ * 安全取得或建立「報修歷程資料」工作表
+ */
+function getOrCreateTicketLogsSheet(ss) {
+  let sheet = ss.getSheetByName('報修歷程資料');
+  if (!sheet) {
+    sheet = ss.insertSheet('報修歷程資料');
+    // 欄位：歷程ID, 單號, 操作人, 角色層級, 回覆內容, 狀態變更, 建立時間
+    sheet.appendRow([
+      '歷程ID',
+      '單號',
+      '操作人',
+      '角色層級',
+      '回覆內容',
+      '狀態變更',
+      '建立時間'
+    ]);
+  }
+  return sheet;
+}
+
+/**
+ * 發送報修進度通知 Email
+ */
+function sendRepairNotificationEmail(ticket, logContent, newStatus) {
+  try {
+    const toEmail = ticket.email || '';
+    if (!toEmail) return;
+    
+    const subject = `【社區報修進度通知】單號：${ticket.id} 狀態已變更為：${newStatus}`;
+    const body = `親愛的住戶您好：\n\n您申報的社區報修案件已更新進度。\n\n單號：${ticket.id}\n類別：${ticket.category}\n地點：${ticket.location}\n最新狀態：${newStatus}\n\n回覆內容：\n${logContent}\n\n感謝您對社區公共事務的參與！\n社區管理委員會`;
+    
+    MailApp.sendEmail(toEmail, subject, body);
+  } catch(e) {
+    console.error('發信失敗：' + e.toString());
+  }
 }

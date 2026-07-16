@@ -51,5 +51,12 @@ export const authService = {
     getUser: () => {
         const user = localStorage.getItem('user');
         return user ? JSON.parse(user) : null;
+    },
+
+    getUserLevel: () => {
+        const user = authService.getUser();
+        if (!user) return 0;
+        if (user.level !== undefined) return parseInt(user.level, 10);
+        return (user.role === 'admin' || user.role === '管理員') ? 99 : 1;
     }
 };

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import Header from '../components/layout/Header';
-import Footer from '../components/layout/Footer';
 import { 
     MessageSquare, 
     Sparkles, 
@@ -339,8 +338,7 @@ const ForumPage = () => {
 
             {/* 社區討論區有它專屬的深色 Footer 或是使用原版 */}
             <div style={{ borderTop: '1px solid #1e293b' }}>
-                <Footer />
-            </div>
+                </div>
         </div>
     );
 };

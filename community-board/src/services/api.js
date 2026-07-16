@@ -113,5 +113,33 @@ export const api = {
    */
   deleteInquiry: async (id, operator) => {
     return api.post('deleteInquiry', { id, operator });
+  },
+
+  /**
+   * 取得報修單主檔列表
+   */
+  getRepairTickets: async (username) => {
+    return api.get('getRepairTickets', { username });
+  },
+
+  /**
+   * 取得報修單的對話歷程
+   */
+  getRepairLogs: async (ticketId) => {
+    return api.get('getRepairLogs', { ticketId });
+  },
+
+  /**
+   * 新增報修單
+   */
+  addRepairTicket: async (ticketData) => {
+    return api.post('addRepairTicket', ticketData);
+  },
+
+  /**
+   * 新增報修歷程回覆、住戶補充說明或推進狀態
+   */
+  addRepairLog: async (logData) => {
+    return api.post('addRepairLog', logData);
   }
 };

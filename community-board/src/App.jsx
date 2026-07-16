@@ -61,7 +61,7 @@ function App() {
                     <Route path="/category/:type" element={<CategoryPage />} />
 
                     {/* 後台保護區域 */}
-                    <Route element={<PrivateRoute />}>
+                    <Route element={<PrivateRoute requiredLevel={99} />}>
                         <Route path="/admin" element={<AdminDashboard />} />
                         <Route path="/admin/add" element={<AddAnnouncement />} />
                         <Route path="/admin/manage" element={<ManageBulletins />} />

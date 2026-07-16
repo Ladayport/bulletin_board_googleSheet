@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import Header from '../components/layout/Header';
-import Footer from '../components/layout/Footer';
 import Modal from '../components/ui/Modal';
 import { 
     QrCode, 
@@ -575,7 +574,6 @@ const VisitorPage = () => {
                 )}
             </Modal>
 
-            <Footer />
         </div>
     );
 };

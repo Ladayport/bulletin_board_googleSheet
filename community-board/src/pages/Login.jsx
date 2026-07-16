@@ -16,8 +16,14 @@ const Login = () => {
         setError('');
 
         try {
-            await authService.login(formData.username, formData.password);
-            navigate('/admin');
+            const result = await authService.login(formData.username, formData.password);
+            const userLevel = result.user ? (result.user.level !== undefined ? result.user.level : (result.user.role === 'admin' ? 99 : 1)) : 0;
+            
+            if (userLevel >= 99) {
+                navigate('/admin');
+            } else {
+                navigate('/repair');
+            }
         } catch (err) {
             setError(err.message);
         } finally {
