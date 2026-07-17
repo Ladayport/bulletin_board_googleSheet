@@ -4,6 +4,9 @@ import { authService } from '../services/auth';
 import { ArrowLeft } from 'lucide-react';
 import '../styles/main.css';
 
+import { api } from '../services/api';
+import { PAGE_FEATURES } from '../config/pageFeatures';
+
 const Login = () => {
     const [formData, setFormData] = useState({ username: '', password: '' });
     const [error, setError] = useState('');
@@ -17,13 +20,20 @@ const Login = () => {
 
         try {
             const result = await authService.login(formData.username, formData.password);
-            const userLevel = result.user ? (result.user.level !== undefined ? result.user.level : (result.user.role === 'admin' ? 99 : 1)) : 0;
             
-            if (userLevel >= 99) {
-                navigate('/admin');
-            } else {
-                navigate('/repair');
+            // 登入成功後，立刻同步並取得最新的頁面權限設定
+            try {
+                const permResult = await api.syncPagePermissions(result.user.name || result.user.username, PAGE_FEATURES);
+                if (permResult.success && permResult.permissions) {
+                    authService.setPagePermissions(permResult.permissions);
+                }
+            } catch (syncErr) {
+                console.error("同步頁面權限失敗:", syncErr);
+                // 同步失敗不阻擋登入，但給予預設
             }
+
+            // 統一導向管理中心 (後台)，由 AdminDashboard 決定顯示哪些功能
+            navigate('/admin');
         } catch (err) {
             setError(err.message);
         } finally {

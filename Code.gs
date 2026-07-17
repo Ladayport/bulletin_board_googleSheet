@@ -687,6 +687,130 @@ function handlePostAction(action, data) {
       
       return { success: true, message: '更新成功' };
 
+    case 'syncPagePermissions':
+      const pageSheet = getOrCreatePagePermissionSheet(ss);
+      const pageRows = pageSheet.getDataRange().getValues();
+      pageRows.shift(); // 移除標題列
+
+      const existingCodes = {};
+      const currentPermissions = [];
+
+      for (let i = 0; i < pageRows.length; i++) {
+        const row = pageRows[i];
+        if (row[0]) {
+          existingCodes[row[0].toString()] = {
+            rowIndex: i + 2, // 實際列數 (+1 標題, +1 索引)
+            desc: row[1],
+            level: parseInt(row[2] || '99', 10),
+            is_use: row[3] || 'Y'
+          };
+          currentPermissions.push({
+            code: row[0].toString(),
+            desc: row[1],
+            level: parseInt(row[2] || '99', 10),
+            is_use: row[3] || 'Y',
+            creator: row[4],
+            createTime: row[5],
+            updater: row[6],
+            updateTime: row[7],
+            logs: row[8]
+          });
+        }
+      }
+
+      const incomingPages = data.pages || [];
+      const nowSync = new Date();
+      const timeSyncStr = formatDate(nowSync) + ' ' + formatTime(nowSync);
+      let addedCount = 0;
+
+      for (let i = 0; i < incomingPages.length; i++) {
+        const p = incomingPages[i];
+        if (!existingCodes[p.code]) {
+          // 發現前端傳來的新功能代號，自動註冊
+          pageSheet.appendRow([
+            p.code,
+            p.name || '',
+            99, // 預設權限 99
+            'Y', // 預設啟用
+            data.operator || '系統自動註冊',
+            timeSyncStr,
+            '',
+            '',
+            '[]' // 空 JSON 紀錄
+          ]);
+          currentPermissions.push({
+            code: p.code,
+            desc: p.name || '',
+            level: 99,
+            is_use: 'Y',
+            creator: data.operator || '系統自動註冊',
+            createTime: timeSyncStr,
+            updater: '',
+            updateTime: '',
+            logs: '[]'
+          });
+          addedCount++;
+        }
+      }
+
+      if (addedCount > 0) {
+        writeLog(ss, data.operator || '系統', `自動註冊了 ${addedCount} 個新頁面功能權限`);
+      }
+
+      return { success: true, permissions: currentPermissions };
+
+    case 'updatePagePermission':
+      const logUpdater = data.operator || 'Admin';
+      const uLvl = getUserLevel(ss, logUpdater);
+      if (uLvl < 99) {
+        return { success: false, message: '權限不足，無法修改頁面權限' };
+      }
+
+      const pSheet = getOrCreatePagePermissionSheet(ss);
+      const pRows = pSheet.getDataRange().getValues();
+      let pFoundIndex = -1;
+      for (let i = 1; i < pRows.length; i++) { // 略過標題列
+        if (pRows[i][0].toString() === data.code.toString()) {
+          pFoundIndex = i;
+          break;
+        }
+      }
+
+      if (pFoundIndex === -1) {
+        return { success: false, message: '找不到該功能代號：' + data.code };
+      }
+
+      const pActualRow = pFoundIndex + 1;
+      const oldLevel = parseInt(pRows[pFoundIndex][2] || '99', 10);
+      const oldUse = pRows[pFoundIndex][3] || 'Y';
+      let oldLogs = [];
+      try {
+        oldLogs = pRows[pFoundIndex][8] ? JSON.parse(pRows[pFoundIndex][8]) : [];
+      } catch (e) {
+        oldLogs = [];
+      }
+
+      const nowUpdate = new Date();
+      const timeUpdateStr = formatDate(nowUpdate) + ' ' + formatTime(nowUpdate);
+
+      // 紀錄差異
+      const logEntry = {
+        timestamp: timeUpdateStr,
+        updater: logUpdater,
+        before: { level: oldLevel, is_use: oldUse },
+        after: { level: data.level, is_use: data.is_use }
+      };
+      oldLogs.push(logEntry);
+
+      pSheet.getRange(pActualRow, 3).setValue(data.level);
+      pSheet.getRange(pActualRow, 4).setValue(data.is_use);
+      pSheet.getRange(pActualRow, 7).setValue(logUpdater); // 更新人員
+      pSheet.getRange(pActualRow, 8).setValue(timeUpdateStr); // 更新時間
+      pSheet.getRange(pActualRow, 9).setValue(JSON.stringify(oldLogs)); // 寫回 JSON
+
+      writeLog(ss, logUpdater, `修改頁面功能權限 [${data.code}]：層級 ${oldLevel}->${data.level}, 啟用 ${oldUse}->${data.is_use}`);
+      return { success: true, message: '頁面權限修改成功' };
+
     default:
       return { success: false, message: 'Unknown POST action' };
   }
@@ -969,4 +1093,27 @@ function sendRepairNotificationEmail(ticket, logContent, newStatus) {
   } catch(e) {
     console.error('發信失敗：' + e.toString());
   }
+}
+
+/**
+ * 安全取得或建立「頁面管理」工作表
+ */
+function getOrCreatePagePermissionSheet(ss) {
+  let sheet = ss.getSheetByName('頁面管理');
+  if (!sheet) {
+    sheet = ss.insertSheet('頁面管理');
+    // 欄位：功能代號, 功能說明, 權限等級, 是否啟用, 新增人員, 新增時間, 更新人員, 更新時間, 操作紀錄(JSON)
+    sheet.appendRow([
+      '功能代號',
+      '功能說明',
+      '權限等級',
+      '是否啟用',
+      '新增人員',
+      '新增時間',
+      '更新人員',
+      '更新時間',
+      '操作紀錄(JSON)'
+    ]);
+  }
+  return sheet;
 }

@@ -141,5 +141,19 @@ export const api = {
    */
   addRepairLog: async (logData) => {
     return api.post('addRepairLog', logData);
+  },
+
+  /**
+   * 同步並取得動態頁面權限設定
+   */
+  syncPagePermissions: async (operator, pages) => {
+    return api.post('syncPagePermissions', { operator, pages });
+  },
+
+  /**
+   * 更新特定頁面的權限與啟用狀態
+   */
+  updatePagePermission: async (operator, code, level, is_use) => {
+    return api.post('updatePagePermission', { operator, code, level, is_use });
   }
 };

@@ -28,6 +28,4 @@ Thumbs.db
 
 # 未來階段三可能會用到的環境變數
 .env
-.env.local
-.env.production
-
+.env.*

@@ -17,6 +17,7 @@ import QuoteVotePage from './pages/admin/QuoteVotePage';
 import InquiryViewPage from './pages/InquiryViewPage';
 import PrivateRoute from './components/layout/PrivateRoute';
 import Footer from './components/layout/Footer';
+import PagePermissionManage from './pages/admin/PagePermissionManage';
 
 // 新增功能建議版型頁面
 import RepairPage from './pages/RepairPage';
@@ -60,14 +61,29 @@ function App() {
 
                     <Route path="/category/:type" element={<CategoryPage />} />
 
-                    {/* 後台保護區域 (暫時調降權限為 1，讓一般帳號也能進入新增公告) */}
-                    <Route element={<PrivateRoute requiredLevel={50} />}>
+                    {/* 後台保護區域：所有管理功能都透過 pageCode 動態驗證 */}
+                    {/* 我們讓 /admin 本身需要一個極低門檻的權限，因為 AdminDashboard 內部會再次動態過濾按鈕 */}
+                    <Route element={<PrivateRoute pageCode="admin_dashboard" requiredLevel={1} />}>
                         <Route path="/admin" element={<AdminDashboard />} />
+                    </Route>
+
+                    {/* 以下功能都使用動態 pageCode 驗證 */}
+                    <Route element={<PrivateRoute pageCode="add_announcement" />}>
                         <Route path="/admin/add" element={<AddAnnouncement />} />
+                    </Route>
+                    
+                    <Route element={<PrivateRoute pageCode="manage_bulletins" />}>
                         <Route path="/admin/manage" element={<ManageBulletins />} />
                         <Route path="/admin/edit/:id" element={<EditBulletin />} />
+                    </Route>
+                    
+                    <Route element={<PrivateRoute pageCode="quote_inquiry" />}>
                         <Route path="/admin/inquiry" element={<QuoteInquiryPage />} />
                         <Route path="/admin/inquiry/vote" element={<QuoteVotePage />} />
+                    </Route>
+
+                    <Route element={<PrivateRoute pageCode="page_management" />}>
+                        <Route path="/admin/pages" element={<PagePermissionManage />} />
                     </Route>
                 </Routes>
             </div>

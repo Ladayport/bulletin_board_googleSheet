@@ -24,6 +24,7 @@ export const authService = {
     logout: () => {
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
+        localStorage.removeItem('pagePermissions');
     },
 
     isAuthenticated: () => {
@@ -58,5 +59,22 @@ export const authService = {
         if (!user) return 0;
         if (user.level !== undefined) return parseInt(user.level, 10);
         return (user.role === 'admin' || user.role === '管理員') ? 99 : 1;
+    },
+
+    setPagePermissions: (permissions) => {
+        localStorage.setItem('pagePermissions', JSON.stringify(permissions));
+    },
+
+    getPagePermissions: () => {
+        const perms = localStorage.getItem('pagePermissions');
+        return perms ? JSON.parse(perms) : [];
+    },
+
+    getPagePermission: (pageCode) => {
+        const perms = authService.getPagePermissions();
+        const found = perms.find(p => p.code === pageCode);
+        if (found) return found;
+        // 若找不到（可能是剛新增尚未同步），預設回傳 99 (最嚴格)
+        return { code: pageCode, level: 99, is_use: 'Y' };
     }
 };
